@@ -157,6 +157,10 @@ function clamp(idx, len) {
 
 async function load() {
   state.clips = await invoke("get_history");
+  // The count goes to the app log on purpose: an empty popup over a full
+  // history is exactly what a missing event permission looks like, and from the
+  // outside the two are indistinguishable.
+  log(`history loaded: ${state.clips.length}`);
   render();
 }
 

@@ -88,6 +88,12 @@ pub fn watch<F: Fn()>(history: Arc<Mutex<History>>, skip_next: Arc<Mutex<bool>>,
         return;
     }
 
+    // One capture arrives as a burst of events (create, then several modifies as
+    // macOS writes and renames the file). Without this, each one re-reads and
+    // re-encodes the same PNG; the history dedup swallows the copies, so the
+    // waste was invisible in the UI and visible only in the log.
+    let mut handled: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
+
     for event in rx {
         let event = match event {
             Ok(e) => e,
@@ -98,6 +104,9 @@ pub fn watch<F: Fn()>(history: Arc<Mutex<History>>, skip_next: Arc<Mutex<bool>>,
         }
         for path in event.paths {
             if !is_screenshot(&path) {
+                continue;
+            }
+            if !handled.insert(path.clone()) {
                 continue;
             }
             let bytes = match read_when_complete(&path) {

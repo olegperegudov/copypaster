@@ -61,7 +61,12 @@ fn frontmost_raw() -> SourceApp {
     }
 }
 
-/// Rasterises the app's icon: NSImage → TIFF → PNG → downscaled PNG data-URL.
+/// Rasterises the app's icon to a downscaled PNG data-URL.
+///
+/// AppKit does the encoding, not the `image` crate. An NSImage's TIFF
+/// representation can be 16-bit float per channel (Ghostty's and Telegram's
+/// are), which `image` refuses to decode — the icons came back blank. Asking
+/// NSBitmapImageRep for a PNG hands us plain 8-bit RGBA that anything can read.
 #[cfg(target_os = "macos")]
 fn icon_data_url(bundle: &str) -> String {
     use base64::Engine;
@@ -69,7 +74,10 @@ fn icon_data_url(bundle: &str) -> String {
     use cocoa::foundation::{NSData, NSString};
     use objc::{class, msg_send, sel, sel_impl};
 
-    let tiff: Vec<u8> = unsafe {
+    /// NSBitmapImageFileTypePNG
+    const PNG_TYPE: u64 = 4;
+
+    let png: Vec<u8> = unsafe {
         let workspace: id = msg_send![class!(NSWorkspace), sharedWorkspace];
         if workspace == nil {
             return String::new();
@@ -83,7 +91,16 @@ fn icon_data_url(bundle: &str) -> String {
         if icon == nil {
             return String::new();
         }
-        let data: id = msg_send![icon, TIFFRepresentation];
+        let tiff: id = msg_send![icon, TIFFRepresentation];
+        if tiff == nil {
+            return String::new();
+        }
+        let rep: id = msg_send![class!(NSBitmapImageRep), imageRepWithData: tiff];
+        if rep == nil {
+            return String::new();
+        }
+        let props: id = msg_send![class!(NSDictionary), dictionary];
+        let data: id = msg_send![rep, representationUsingType: PNG_TYPE properties: props];
         if data == nil {
             return String::new();
         }
@@ -95,7 +112,7 @@ fn icon_data_url(bundle: &str) -> String {
         std::slice::from_raw_parts(bytes, len).to_vec()
     };
 
-    let img = match image::load_from_memory(&tiff) {
+    let img = match image::load_from_memory(&png) {
         Ok(i) => i,
         Err(e) => {
             crate::debug_log::log(&format!("icon: decode failed for {}: {}", bundle, e));
