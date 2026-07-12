@@ -52,7 +52,7 @@ fn send_paste_keys() -> Result<(), String> {
 
 /// Brings the app that was in front when the popup opened back to the front.
 #[cfg(target_os = "macos")]
-fn activate(pid: i32) {
+pub fn activate(pid: i32) {
     use cocoa::base::{id, nil};
     use objc::{class, msg_send, sel, sel_impl};
     unsafe {
@@ -67,7 +67,7 @@ fn activate(pid: i32) {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn activate(_pid: i32) {
+pub fn activate(_pid: i32) {
     // Windows never took focus away — the popup is a skip-taskbar tool window.
 }
 

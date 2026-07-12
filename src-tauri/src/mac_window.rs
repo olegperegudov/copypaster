@@ -46,9 +46,33 @@ pub fn setup_panel(_window: &tauri::WebviewWindow) -> Result<(), String> {
     Ok(())
 }
 
+/// Takes the keyboard for the duration of the popup.
+///
+/// A non-activating panel can be key while its app stays in the background —
+/// that is how Spotlight types without disturbing anyone. But the app underneath
+/// stays *active*, and any key the popup does not consume still reaches it: Esc
+/// over an open popup was closing the Telegram window behind it. Owning the
+/// keyboard outright ends that whole class of leak, and it costs nothing here —
+/// the paste path brings the target app back by pid before sending Cmd+V, and Esc
+/// hands activation back the same way.
+#[cfg(target_os = "macos")]
+fn activate_self() {
+    use cocoa::base::{id, nil};
+    use objc::{class, msg_send, sel, sel_impl};
+    unsafe {
+        let app: id = msg_send![class!(NSRunningApplication), currentApplication];
+        if app == nil {
+            return;
+        }
+        // NSApplicationActivateIgnoringOtherApps
+        let _: bool = msg_send![app, activateWithOptions: 1u64];
+    }
+}
+
 #[cfg(target_os = "macos")]
 pub fn show_popup(app: &tauri::AppHandle) {
     use tauri_nspanel::ManagerExt;
+    activate_self();
     match app.get_webview_panel("main") {
         Ok(p) => p.show_and_make_key(),
         Err(e) => crate::debug_log::log(&format!("show_popup: panel missing ({:?})", e)),

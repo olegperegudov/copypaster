@@ -63,9 +63,14 @@ fn pick(app: AppHandle, state: tauri::State<AppState>, id: u64) -> Result<(), St
     paste::paste(&payload, &state.skip_next, target)
 }
 
+/// Esc, or a click past the popup: put it away and hand the keyboard back to the
+/// app the user came from, exactly as a paste would have done.
 #[tauri::command]
-fn close_popup(app: AppHandle) {
+fn close_popup(app: AppHandle, state: tauri::State<AppState>) {
     mac_window::hide_popup(&app);
+    if let Some(pid) = state.target_pid.lock().ok().and_then(|g| *g) {
+        paste::activate(pid);
+    }
 }
 
 #[tauri::command]
@@ -155,6 +160,12 @@ fn toggle_popup(app: &AppHandle) {
     if mac_window::popup_visible(app) {
         debug_log::log("hotkey: popup down");
         mac_window::hide_popup(app);
+        // Same as Esc: whoever we took the keyboard from gets it back.
+        if let Some(state) = app.try_state::<AppState>() {
+            if let Some(pid) = state.target_pid.lock().ok().and_then(|g| *g) {
+                paste::activate(pid);
+            }
+        }
         return;
     }
     // Remember where to paste *before* the panel goes up.

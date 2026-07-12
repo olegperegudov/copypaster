@@ -183,6 +183,14 @@ async function pick(id) {
 function setZone(zone) {
   if (state.zone === zone) return;
   state.zone = zone;
+  if (zone === "apps") {
+    // Stepping into the row is already a choice: the app under the cursor starts
+    // filtering right away, and the ⌫ chip appears with it. Waiting for a
+    // sideways press would mean standing on an app that is not the one you see
+    // the cards for.
+    state.appFilter = apps()[state.appIdx]?.bundle ?? null;
+    state.cardIdx = 0;
+  }
   if (zone === "search") {
     el.query.focus();
   } else {
