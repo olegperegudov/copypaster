@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CopyPaster</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="popup">
+    <!-- Three floating zones, no shared backdrop: what is behind them is the
+         user's own screen. Order is bottom-up in use (cards → search → apps),
+         so the markup runs apps → search → cards. -->
+    <div class="float">
+      <div class="glass apps" id="apps"></div>
+
+      <div class="glass search" id="search">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5 L14 14" stroke-linecap="round" />
+        </svg>
+        <input
+          id="query"
+          type="text"
+          placeholder="Поиск по истории…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <span class="count" id="count"></span>
+      </div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+    <p class="empty" id="empty" hidden>История буфера пуста — скопируйте что-нибудь.</p>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

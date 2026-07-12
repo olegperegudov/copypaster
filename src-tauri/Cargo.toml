@@ -1,0 +1,50 @@
+[package]
+name = "copypaster"
+version = "0.1.0"
+description = "Clipboard history for macOS and Windows"
+authors = ["Oleg Peregudov"]
+edition = "2021"
+
+[lib]
+# The `_lib` suffix keeps the lib name from colliding with the bin name on
+# Windows (rust-lang/cargo#8519).
+name = "copypaster_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "macos-private-api", "image-png"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Reads/writes clipboard text and images on both platforms. Change *detection*
+# stays platform-native (see clipboard.rs) — arboard has no cheap "did it
+# change" call, and decoding every image twice a second to find out is absurd.
+arboard = "3"
+# Synthetic Cmd+V / Ctrl+V into the app that was focused before the popup.
+enigo = "0.2"
+# PNG encoding for card previews handed to the webview as data: URLs.
+image = { version = "0.25", default-features = false, features = ["png"] }
+base64 = "0.22"
+dirs = "6"
+tokio = { version = "1", features = ["time"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.26"
+objc = "0.2"
+# Screenshots land as *files*, not on the clipboard. Watching the folder with
+# FS events (not a 1s poll) is what makes a fresh screenshot show up instantly.
+notify = "7"
+# Turns the borderless window into a non-activating NSPanel: it takes keystrokes
+# without activating CopyPaster, so the app underneath keeps its focus and the
+# synthetic Cmd+V lands where the user was typing. Same mechanism Spotlight uses.
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_Foundation",
+  "Win32_System_DataExchange",
+] }

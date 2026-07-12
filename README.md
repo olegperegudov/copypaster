@@ -1,52 +1,56 @@
 # CopyPaster
 
-Minimal clipboard manager for macOS — a Win+V analogue. Keeps the last 20 clipboard items (text + images), shows them in a popup picker on `⌥V`, pastes the selected one into the focused window.
+История буфера обмена в менюбаре. `⌥V` — карточки последних клипов, живой поиск, фильтр по приложению, вставка в то окно, где вы были.
 
-Native Swift + SwiftUI, no dependencies, single binary.
+Скриншот попадает в буфер **сразу**, а не через несколько секунд.
 
-## Features
+## Установка (macOS)
 
-- Background menu-bar app (no Dock icon).
-- Polls `NSPasteboard` and remembers the last 20 items.
-- `⌥V` opens the picker; arrow keys navigate, `Enter` / click pastes, `Esc` / outside-click dismisses.
-- `⌘V` is left untouched — standard system paste still works.
-- Screenshots taken via `⌘⇧3` / `⌘⇧4` are auto-copied to the clipboard (so they land in history and become immediately pasteable).
-- Single Accessibility prompt on first launch (needed for synthesizing `⌘V` to the focused window).
+1. Скачайте DMG со [страницы релизов](https://github.com/olegperegudov/copypaster/releases/latest) — `aarch64` для Apple Silicon, `x64` для Intel.
+2. Перетащите CopyPaster в Applications и запустите **правым кликом → Открыть** (приложение не нотаризовано у Apple).
+3. Разрешите **Универсальный доступ** (Системные настройки → Конфиденциальность и безопасность → Универсальный доступ). Без него приложение не сможет вставлять за вас.
 
-## Build
+Обновления приходят сами: иконка в менюбаре загорается зелёным, а в её меню появляется «Обновить до vX.Y.Z».
 
-Requires macOS 14+ and the Swift toolchain (Command Line Tools is enough).
+## Как пользоваться
 
-```sh
-./build.sh
+`⌥V` поднимает историю поверх экрана. Три зоны, две оси:
+
+- **Вверх-вниз** — между зонами: карточки → поиск → приложения.
+- **Влево-вправо** — внутри зоны, где стоит курсор.
+
+| Где | Клавиши |
+|---|---|
+| Карточки | `←` `→` выбрать, `⏎` вставить, `1`…`9` вставить по номеру |
+| Поиск | ищет с первой буквы, Enter не нужен; `←` `→` — курсор по буквам |
+| Приложения | `←` `→` ставят фильтр сразу; `⌫` сбрасывает его и уводит вниз, в поиск |
+| Везде | `esc` закрыть |
+
+Полная шпаргалка — в меню иконки, пункт «Горячие клавиши». Она подсвечивает зону, в которой вы стоите: одна и та же клавиша в разных зонах делает разное — цифры выбирают карточку, а в поиске просто печатаются.
+
+## Мгновенные скриншоты
+
+Shift-Cmd-4 не кладёт картинку в буфер: он сохраняет файл. Пока в углу висит плавающая миниатюра, файла на диске ещё нет — macOS пишет его, только когда она угаснет, а это около пяти секунд. Всё это время «скопировать скриншот» вставляет предыдущий клип.
+
+Пункт меню **«Мгновенные скриншоты»** выключает эту миниатюру. Тогда файл ложится на диск сразу, CopyPaster ловит его событием файловой системы, и картинка оказывается и в истории, и в буфере — обычный `⌘V` вставит именно её. Роль превью берёт на себя карточка.
+
+## Разработка
+
+```bash
+npm install
+npm run tauri dev                  # запустить
+npm test                           # тесты поиска, фильтрации, подсветки
+cd src-tauri && cargo test --lib   # тесты истории
 ```
 
-Produces `CopyPaster.app` in the project root, ad-hoc signed.
+Каждый push в `main` — релиз: CI сам поднимает patch-версию, собирает macOS (Apple Silicon и Intel по отдельности) и Windows, публикует релиз и манифест автообновления.
 
-## Run
+Лог текущей сессии: `~/Library/Application Support/copypaster/debug.log`.
 
-```sh
-open CopyPaster.app
-```
+## Стек
 
-On first launch macOS will ask for Accessibility — grant it (System Settings → Privacy & Security → Accessibility). Without it the auto-paste (synthetic `⌘V`) silently fails; everything else still works.
+Tauri 2 — Rust снаружи, HTML/CSS/JS внутри, одна кодовая база на macOS и Windows. Те же рельсы, что у [Ribbit](https://github.com/olegperegudov/ribbit) и [Quill](https://github.com/olegperegudov/quill): общий конвейер сборки, подписи и обновлений на все три приложения.
 
-## Notes
-
-- Ad-hoc signed only (no Apple Developer cert, no notarization). Gatekeeper may complain on first run; either right-click → Open, or `xattr -dr com.apple.quarantine CopyPaster.app`.
-- Every rebuild changes the binary's `cdhash`, so macOS treats it as a new app and revokes the previous Accessibility grant. Reset via:
-
-  ```sh
-  tccutil reset Accessibility com.olegperegudov.copypaster
-  ```
-
-  then re-grant on next launch.
-- History lives in memory only — not persisted between restarts.
-
-## Hotkey
-
-`⌥V` (Option + V) is registered via Carbon `RegisterEventHotKey` so it doesn't require an Input Monitoring permission and survives the popup grabbing key-window status.
-
-## License
+## Лицензия
 
 MIT.

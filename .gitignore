@@ -1,5 +1,22 @@
-.build/
-.swiftpm/
-*.xcodeproj
-DerivedData/
-CopyPaster.app/
+# Logs
+*.log
+
+node_modules
+dist
+*.local
+
+# Rust
+src-tauri/target
+
+# Secrets
+.env
+*.env
+
+# Claude config (private, symlinked to membeme)
+CLAUDE.md
+.claude/
+
+# Editor / OS
+.vscode/*
+.idea
+.DS_Store

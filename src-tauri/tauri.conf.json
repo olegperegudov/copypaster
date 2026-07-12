@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CopyPaster",
+  "version": "0.1.0",
+  "identifier": "com.copypaster.app",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "CopyPaster",
+        "width": 1280,
+        "height": 460,
+        "resizable": false,
+        "center": false,
+        "visible": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false
+      },
+      {
+        "label": "shortcuts",
+        "title": "Shortcuts",
+        "url": "shortcuts.html",
+        "width": 420,
+        "height": 470,
+        "resizable": false,
+        "center": true,
+        "visible": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "ZFc1MGNuVnpkR1ZrSUdOdmJXMWxiblE2SUcxcGJtbHphV2R1SUhCMVlteHBZeUJyWlhrNklFVTBNRFpFTWtJNU5VRTRNME0wUkVRS1VsZFVaSGhKVG1GMVpFbEhOVkJZWlVWTGEzVnBUa2RMTkRnMlZYUkNSblYyTVRKWk5qQmplalV5TlNzelF5OTBjMlUwY1VwSVVIa0s=",
+      "endpoints": [
+        "https://github.com/olegperegudov/copypaster/releases/latest/download/latest.json"
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": "v1Compatible",
+    "targets": [
+      "nsis",
+      "dmg"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

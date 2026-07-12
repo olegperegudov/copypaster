@@ -1,0 +1,343 @@
+/* CopyPaster popup.
+   The window itself is transparent and never scrolls: the three zones float
+   over whatever the user is looking at. Any bounce or scrollbar here shows up
+   as white gaps around the glass, so both are turned off at the root. */
+
+:root {
+  --glass: rgba(24, 28, 34, 0.72);
+  --glass-line: rgba(255, 255, 255, 0.12);
+  --glass-fill: rgba(255, 255, 255, 0.07);
+  --ink: #eef1f4;
+  --ink-2: #9aa5b0;
+  --accent: #39c0b3;
+  --accent-soft: rgba(57, 192, 179, 0.18);
+  /* Search hit: the same pink-purple Ribbit marks its log matches with. */
+  --hit: #c25cce;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+  user-select: none;
+}
+
+body.popup {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.float {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-line);
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* The zone holding the keyboard cursor gets the ring — without it the arrows
+   feel like they are moving something invisible. */
+.glass.focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(57, 192, 179, 0.4), 0 14px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* --- search --- */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  width: 420px;
+}
+.search svg {
+  flex: 0 0 auto;
+  opacity: 0.55;
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  user-select: text;
+}
+.search input::placeholder {
+  color: var(--ink-2);
+}
+.search .count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* --- app row --- */
+.apps {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.apps:empty {
+  display: none;
+}
+.app {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  background: var(--glass-fill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 5px 9px 5px 6px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.app.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.app.cursor {
+  box-shadow: 0 0 0 2px rgba(57, 192, 179, 0.55);
+}
+.app .count {
+  font-family: var(--mono);
+  font-size: 10px;
+  opacity: 0.7;
+}
+.app-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  background: #55606c;
+  object-fit: contain;
+}
+
+/* --- cards --- */
+.cards {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 6px 2px 8px;
+  scrollbar-width: none;
+}
+.cards::-webkit-scrollbar {
+  display: none;
+}
+.card {
+  flex: 0 0 168px;
+  height: 194px;
+  background: var(--glass);
+  backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-line);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.card.sel {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(57, 192, 179, 0.45), 0 16px 34px rgba(0, 0, 0, 0.5);
+  transform: translateY(-5px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.card-body {
+  flex: 1;
+  padding: 9px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow: hidden;
+  color: rgba(238, 241, 244, 0.92);
+  word-break: break-word;
+  user-select: none;
+}
+.card-body.image {
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+.card-body.image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.badge {
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.badge.image {
+  background: var(--accent-soft);
+  color: #9beee5;
+}
+
+mark.hit {
+  background: var(--hit);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.empty {
+  margin: 0;
+  padding: 14px 16px;
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--ink-2);
+  background: var(--glass);
+  backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-line);
+  border-radius: 12px;
+}
+
+/* --- shortcuts window --- */
+body.sheet {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-line);
+  border-radius: 14px;
+  height: 100%;
+}
+.sheet h1 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.zone {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* The zone the user is standing in right now — the same keys mean different
+   things elsewhere, so the live one is called out. */
+.zone.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.zone h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.zone .row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+/* The arrow cluster drawn the way it sits on the keyboard. */
+.dpad {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 15px);
+  grid-template-rows: repeat(2, 15px);
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.dpad i {
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  font-size: 8px;
+  line-height: 1;
+  font-style: normal;
+  color: var(--ink);
+}
+.dpad .up { grid-column: 2; grid-row: 1; }
+.dpad .lf { grid-column: 1; grid-row: 2; }
+.dpad .dn { grid-column: 2; grid-row: 2; }
+.dpad .rt { grid-column: 3; grid-row: 2; }
+
+.sheet .hint {
+  font-size: 11px;
+  color: var(--ink-2);
+  margin: 0;
+}

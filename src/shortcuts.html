@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Горячие клавиши</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="sheet">
+    <h1>Горячие клавиши</h1>
+
+    <div class="zone" data-zone="global">
+      <h2>Везде</h2>
+      <div class="row">
+        <span class="dpad"><i class="up">▲</i><i class="lf">◀</i><i class="dn">▼</i><i class="rt">▶</i></span>
+        <span>Навигация: вверх-вниз между зонами, влево-вправо внутри зоны</span>
+      </div>
+      <div class="row"><kbd>⌥V</kbd><span>Открыть и закрыть историю</span></div>
+      <div class="row"><kbd>esc</kbd><span>Закрыть</span></div>
+    </div>
+
+    <div class="zone" data-zone="cards">
+      <h2>На карточках</h2>
+      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Выбрать карточку</span></div>
+      <div class="row"><kbd>1</kbd>…<kbd>9</kbd><span>Вставить карточку сразу по номеру</span></div>
+      <div class="row"><kbd>⏎</kbd><span>Вставить выбранную</span></div>
+    </div>
+
+    <div class="zone" data-zone="search">
+      <h2>В поиске</h2>
+      <div class="row"><span>Ищет с первой буквы, Enter не нужен</span></div>
+      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Курсор по буквам</span></div>
+      <div class="row"><kbd>1</kbd>…<kbd>9</kbd><span>Печатают цифры, а не выбирают карточку</span></div>
+      <div class="row"><kbd>⌫</kbd><span>Стирает символ</span></div>
+    </div>
+
+    <div class="zone" data-zone="apps">
+      <h2>На приложениях</h2>
+      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Фильтр встаёт сразу, Enter не нужен</span></div>
+      <div class="row"><kbd>⌫</kbd><span>Сбросить фильтр и шагнуть вниз, в поиск</span></div>
+    </div>
+
+    <p class="hint">Подсвечена зона, в которой вы сейчас стоите.</p>
+
+    <script type="module" src="shortcuts.js"></script>
+  </body>
+</html>
