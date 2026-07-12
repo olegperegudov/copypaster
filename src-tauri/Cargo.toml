@@ -1,6 +1,6 @@
 [package]
 name = "copypaster"
-version = "0.1.0"
+version = "0.1.1"
 description = "Clipboard history for macOS and Windows"
 authors = ["Oleg Peregudov"]
 edition = "2021"
