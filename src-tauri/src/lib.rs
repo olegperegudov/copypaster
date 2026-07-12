@@ -219,6 +219,7 @@ pub fn run() {
                     debug_log::log(&format!("panel setup failed: {}", e));
                 }
             }
+            mac_window::dismiss_on_outside_click(handle.clone());
 
             // Option+V from anywhere.
             let hotkey: Shortcut = HOTKEY.parse().map_err(|e| format!("bad hotkey: {}", e))?;
@@ -278,6 +279,17 @@ pub fn run() {
 
             debug_log::log("setup complete");
             Ok(())
+        })
+        // Windows counterpart of the outside-click monitor: there the popup is an
+        // ordinary window, so a click on another one takes its focus away.
+        .on_window_event(|window, event| {
+            #[cfg(not(target_os = "macos"))]
+            if window.label() == "main" {
+                if let tauri::WindowEvent::Focused(false) = event {
+                    let _ = window.hide();
+                }
+            }
+            let _ = (window, event);
         })
         .run(tauri::generate_context!())
         .expect("error while running CopyPaster");

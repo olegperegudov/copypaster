@@ -63,6 +63,47 @@ pub fn hide_popup(app: &tauri::AppHandle) {
     }
 }
 
+/// Dismisses the popup when the user clicks anywhere outside it.
+///
+/// A non-activating panel never becomes the active app, so it gets no "you lost
+/// focus" callback to hang this on — clicking another window simply does not
+/// concern us. A global NSEvent monitor does: it reports mouse-downs that landed
+/// in *other* applications and never fires for clicks inside our own window, so
+/// picking a card cannot dismiss the popup out from under itself. Mouse monitors
+/// need no Accessibility grant (only keyboard ones do).
+#[cfg(target_os = "macos")]
+pub fn dismiss_on_outside_click(app: tauri::AppHandle) {
+    use block::ConcreteBlock;
+    use cocoa::base::id;
+    use objc::{class, msg_send, sel, sel_impl};
+
+    const LEFT_MOUSE_DOWN: u64 = 1 << 1;
+    const RIGHT_MOUSE_DOWN: u64 = 1 << 3;
+    const OTHER_MOUSE_DOWN: u64 = 1 << 25;
+
+    let handler = ConcreteBlock::new(move |_event: id| {
+        if popup_visible(&app) {
+            hide_popup(&app);
+        }
+    });
+    // The monitor outlives this call and keeps calling the block, so the block has
+    // to outlive it too — copied to the heap and deliberately never freed.
+    let handler = handler.copy();
+    unsafe {
+        let mask = LEFT_MOUSE_DOWN | RIGHT_MOUSE_DOWN | OTHER_MOUSE_DOWN;
+        let _: id = msg_send![class!(NSEvent),
+            addGlobalMonitorForEventsMatchingMask: mask
+            handler: &*handler];
+    }
+    std::mem::forget(handler);
+    crate::debug_log::log("panel: watching for clicks outside the popup");
+}
+
+// Windows needs no monitor: the popup there is an ordinary window, and clicking
+// another one takes focus away from it — see the focus handler in lib.rs.
+#[cfg(not(target_os = "macos"))]
+pub fn dismiss_on_outside_click(_app: tauri::AppHandle) {}
+
 #[cfg(target_os = "macos")]
 pub fn popup_visible(app: &tauri::AppHandle) -> bool {
     use tauri_nspanel::ManagerExt;

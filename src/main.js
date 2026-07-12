@@ -57,6 +57,7 @@ function render() {
 
 function renderApps(row) {
   el.apps.replaceChildren();
+  if (state.appFilter) el.apps.append(clearChip());
   row.forEach((app, idx) => {
     const node = document.createElement("span");
     node.className = "app";
@@ -77,6 +78,17 @@ function renderApps(row) {
     });
     el.apps.append(node);
   });
+}
+
+/** The "⌫ сброс" chip that appears at the head of the app row while a filter is on. */
+function clearChip() {
+  const chip = document.createElement("span");
+  chip.className = "apps-clear";
+  const key = document.createElement("kbd");
+  key.textContent = "⌫";
+  chip.append(key, document.createTextNode("сброс"));
+  chip.addEventListener("click", clearAppFilter);
+  return chip;
 }
 
 function appIcon(app) {
@@ -287,6 +299,13 @@ el.query.addEventListener("input", () => {
 });
 
 el.search.addEventListener("click", () => setZone("search"));
+
+// The popup window is a full-width strip, mostly bare: what the user sees through
+// it is their own screen, so a click on the bare part is a click *past* CopyPaster
+// and means "go away". Clicks outside the window are caught natively (mac_window).
+document.addEventListener("mousedown", (e) => {
+  if (!e.target.closest(".glass, .card, .empty")) invoke("close_popup");
+});
 
 // ---------- wiring ----------
 

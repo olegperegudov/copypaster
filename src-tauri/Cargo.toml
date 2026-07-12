@@ -35,6 +35,9 @@ tokio = { version = "1", features = ["time"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.26"
 objc = "0.2"
+# NSEvent's global monitor takes an Objective-C block and nothing else — that is
+# how we notice a click landing anywhere outside the popup.
+block = "0.1"
 # Screenshots land as *files*, not on the clipboard. Watching the folder with
 # FS events (not a 1s poll) is what makes a fresh screenshot show up instantly.
 notify = "7"
