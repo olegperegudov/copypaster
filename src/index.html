@@ -10,7 +10,13 @@
          user's own screen. Order is bottom-up in use (cards → search → apps),
          so the markup runs apps → search → cards. -->
     <div class="float">
-      <div class="glass apps" id="apps"></div>
+      <!-- The ⌫ chip is a tab on top of the app row, not the first thing in it:
+           as the head of the row it shoved every icon sideways the moment a
+           filter went on. -->
+      <div class="apps-zone">
+        <span class="apps-clear" id="apps-clear" hidden><kbd>⌫</kbd>сброс</span>
+        <div class="glass apps" id="apps"></div>
+      </div>
 
       <div class="glass search" id="search">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">

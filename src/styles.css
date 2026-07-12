@@ -110,23 +110,38 @@ body.popup {
 .apps:empty {
   display: none;
 }
-/* Shown only while an app filter is on, and only at the head of the row: the key
-   that clears the filter has to sit where the filter lives, or nobody finds it. */
+/* The key that clears the filter has to sit where the filter lives — but inside
+   the row it would push every icon aside the moment it appears. So it is a tab
+   above the row, in space that is reserved whether or not it is showing: nothing
+   moves when the filter goes on. */
+.apps-zone {
+  position: relative;
+  padding-top: 20px;
+  max-width: 100%;
+}
 .apps-clear {
+  position: absolute;
+  top: 0;
+  left: 12px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  padding: 5px 9px;
-  border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.22);
-  font-size: 11px;
+  gap: 5px;
+  height: 21px;
+  padding: 0 8px;
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  font-size: 10px;
   color: var(--ink-2);
   white-space: nowrap;
 }
+.apps-clear[hidden] {
+  display: none;
+}
 .apps-clear kbd {
-  font-size: 11px;
-  padding: 0 4px;
+  font-size: 10px;
+  padding: 0 3px;
 }
 
 .app {

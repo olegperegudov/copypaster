@@ -4,6 +4,7 @@
 // moves inside the zone that holds the cursor. Each zone remembers where the
 // cursor was, so stepping away and back does not lose your place.
 
+import { clamp, wrap } from "./nav.js";
 import { age, appRow, highlightMatches, visibleClips } from "./search.js";
 
 const { invoke } = window.__TAURI__.core;
@@ -23,6 +24,7 @@ const state = {
 
 const el = {
   apps: document.getElementById("apps"),
+  clear: document.getElementById("apps-clear"),
   search: document.getElementById("search"),
   query: document.getElementById("query"),
   count: document.getElementById("count"),
@@ -56,8 +58,8 @@ function render() {
 }
 
 function renderApps(row) {
+  el.clear.hidden = !state.appFilter;
   el.apps.replaceChildren();
-  if (state.appFilter) el.apps.append(clearChip());
   row.forEach((app, idx) => {
     const node = document.createElement("span");
     node.className = "app";
@@ -78,17 +80,6 @@ function renderApps(row) {
     });
     el.apps.append(node);
   });
-}
-
-/** The "⌫ сброс" chip that appears at the head of the app row while a filter is on. */
-function clearChip() {
-  const chip = document.createElement("span");
-  chip.className = "apps-clear";
-  const key = document.createElement("kbd");
-  key.textContent = "⌫";
-  chip.append(key, document.createTextNode("сброс"));
-  chip.addEventListener("click", clearAppFilter);
-  return chip;
 }
 
 function appIcon(app) {
@@ -160,11 +151,6 @@ function renderCards(list) {
   if (selected) selected.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
-function clamp(idx, len) {
-  if (len === 0) return 0;
-  return Math.min(Math.max(idx, 0), len - 1);
-}
-
 // ---------- actions ----------
 
 async function load() {
@@ -220,7 +206,9 @@ function moveCursor(delta) {
     state.cardIdx = clamp(state.cardIdx + delta, cards().length);
   } else if (state.zone === "apps") {
     const row = apps();
-    state.appIdx = clamp(state.appIdx + delta, row.length);
+    // The row wraps: the apps are few and it is a ring, so holding one direction
+    // walks the whole thing instead of parking you against an end.
+    state.appIdx = wrap(state.appIdx + delta, row.length);
     // The filter follows the cursor: one arrow press is the whole gesture, no
     // Enter to confirm.
     state.appFilter = row[state.appIdx]?.bundle ?? null;
@@ -307,12 +295,13 @@ el.query.addEventListener("input", () => {
 });
 
 el.search.addEventListener("click", () => setZone("search"));
+el.clear.addEventListener("click", clearAppFilter);
 
 // The popup window is a full-width strip, mostly bare: what the user sees through
 // it is their own screen, so a click on the bare part is a click *past* CopyPaster
 // and means "go away". Clicks outside the window are caught natively (mac_window).
 document.addEventListener("mousedown", (e) => {
-  if (!e.target.closest(".glass, .card, .empty")) invoke("close_popup");
+  if (!e.target.closest(".glass, .card, .empty, .apps-clear")) invoke("close_popup");
 });
 
 // ---------- wiring ----------
