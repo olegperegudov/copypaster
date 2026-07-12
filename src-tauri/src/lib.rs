@@ -280,16 +280,24 @@ pub fn run() {
             debug_log::log("setup complete");
             Ok(())
         })
-        // Windows counterpart of the outside-click monitor: there the popup is an
-        // ordinary window, so a click on another one takes its focus away.
         .on_window_event(|window, event| {
+            // The cheat sheet closes with its cross, but closing must not destroy
+            // it — the tray item reopens the same window, and a destroyed one
+            // cannot be shown again.
+            if window.label() == "shortcuts" {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+            // Windows counterpart of the outside-click monitor: there the popup is
+            // an ordinary window, so a click on another one takes its focus away.
             #[cfg(not(target_os = "macos"))]
             if window.label() == "main" {
                 if let tauri::WindowEvent::Focused(false) = event {
                     let _ = window.hide();
                 }
             }
-            let _ = (window, event);
         })
         .run(tauri::generate_context!())
         .expect("error while running CopyPaster");
@@ -300,10 +308,13 @@ pub fn run() {
 fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let update = MenuItem::with_id(app, "update", "Проверить обновления", true, None::<&str>)?;
     let shortcuts = MenuItem::with_id(app, "shortcuts", "Горячие клавиши", true, None::<&str>)?;
+    // Named after what the user gets, not after the macOS pref it flips: ticking
+    // it turns off the floating thumbnail, and the capture reaches the clipboard
+    // at once instead of five seconds later.
     let instant = CheckMenuItem::with_id(
         app,
         "instant",
-        "Мгновенные скриншоты",
+        "Скриншот сразу в буфер (без миниатюры)",
         true,
         instant_state(),
         None::<&str>,

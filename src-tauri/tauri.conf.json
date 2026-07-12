@@ -26,18 +26,14 @@
       },
       {
         "label": "shortcuts",
-        "title": "Shortcuts",
+        "title": "Горячие клавиши",
         "url": "shortcuts.html",
         "width": 420,
-        "height": 560,
+        "height": 590,
         "resizable": false,
         "center": true,
         "visible": false,
-        "alwaysOnTop": true,
-        "skipTaskbar": true,
-        "decorations": false,
-        "transparent": true,
-        "shadow": false
+        "skipTaskbar": true
       }
     ],
     "security": {

@@ -274,24 +274,17 @@ mark.hit {
   border-radius: 12px;
 }
 
-/* --- shortcuts window --- */
+/* --- shortcuts window ---
+   An ordinary window with a system title bar: it closes with the cross, with
+   Cmd+W, with Esc, and it does not hover over everything else. The popup is the
+   only thing here that has any business floating. */
 body.sheet {
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: var(--glass);
-  border: 1px solid var(--glass-line);
-  border-radius: 14px;
   height: 100%;
-}
-.sheet h1 {
-  margin: 0;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  font-weight: 600;
 }
 .zone {
   border: 1px solid rgba(255, 255, 255, 0.08);
