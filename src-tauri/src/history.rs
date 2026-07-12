@@ -92,6 +92,19 @@ impl History {
         true
     }
 
+    /// Puts back what was on disk at launch. Ids continue from the highest one
+    /// seen: a fresh clip must never reuse the id of a restored one, or picking a
+    /// card would hand back the wrong content.
+    pub fn restore(&mut self, items: Vec<ClipItem>) {
+        self.next_id = items.iter().map(|i| i.id).max().unwrap_or(0) + 1;
+        self.items = items;
+        self.items.truncate(MAX_ITEMS);
+    }
+
+    pub fn items(&self) -> &[ClipItem] {
+        &self.items
+    }
+
     pub fn get(&self, id: u64) -> Option<&ClipItem> {
         self.items.iter().find(|i| i.id == id)
     }

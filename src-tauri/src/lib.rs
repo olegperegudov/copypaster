@@ -14,6 +14,7 @@ mod paste;
 #[cfg(target_os = "macos")]
 mod screenshot;
 mod source_app;
+mod store;
 
 use history::History;
 use std::sync::{Arc, Mutex};
@@ -155,6 +156,15 @@ fn announce_update(app: &AppHandle, version: &str) {
     let _ = app.emit("update-available", version);
 }
 
+/// Writes the history out after a clip was added. Called on the watcher thread,
+/// off the UI path — the popup does not wait for the disk.
+fn persist(store: &store::Store, history: &Mutex<History>) {
+    match history.lock() {
+        Ok(h) => store.save(h.items()),
+        Err(e) => debug_log::log(&format!("store: history poisoned, not saved: {}", e)),
+    }
+}
+
 /// Option+V: raise the popup, or put it away if it is already up.
 fn toggle_popup(app: &AppHandle) {
     if mac_window::popup_visible(app) {
@@ -218,6 +228,16 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
 
+            // The history outlives the process. An update *is* a restart, and
+            // losing the clipboard because a new version arrived is not something
+            // a user should have to accept.
+            let store = Arc::new(store::Store::new(
+                app.path().app_data_dir().map_err(|e| format!("no app data dir: {}", e))?,
+            ));
+            if let Ok(mut h) = history.lock() {
+                h.restore(store.load());
+            }
+
             // Menu-bar utility: no Dock icon, no Cmd-Tab entry. Also keeps app
             // activation out of the paste path.
             #[cfg(target_os = "macos")]
@@ -246,9 +266,12 @@ pub fn run() {
 
             // Clipboard watcher.
             let watcher_handle = handle.clone();
+            let watcher_history = Arc::clone(&history);
+            let watcher_store = Arc::clone(&store);
             let w = clipboard::Watcher::new(Arc::clone(&history), Arc::clone(&skip_next));
             std::thread::spawn(move || {
                 w.run(|| {
+                    persist(&watcher_store, &watcher_history);
                     let _ = watcher_handle.emit("history-changed", ());
                 });
             });
@@ -260,8 +283,11 @@ pub fn run() {
                 let shot_handle = handle.clone();
                 let shot_history = Arc::clone(&history);
                 let shot_skip = Arc::clone(&skip_next);
+                let shot_store = Arc::clone(&store);
+                let saved_history = Arc::clone(&history);
                 std::thread::spawn(move || {
                     screenshot::watch(shot_history, shot_skip, || {
+                        persist(&shot_store, &saved_history);
                         let _ = shot_handle.emit("history-changed", ());
                     });
                 });
