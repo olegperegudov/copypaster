@@ -285,10 +285,19 @@ fn toggle_popup(app: &AppHandle) {
     mac_window::show_popup(app);
 }
 
+/// The windows the tray menu opens. They are hidden on close, never destroyed,
+/// so the same window answers every time the menu item is pressed.
+const TRAY_WINDOWS: [&str; 2] = ["settings", "shortcuts"];
+
 fn show_window(app: &AppHandle, label: &str) {
-    if let Some(w) = app.get_webview_window(label) {
-        let _ = w.show();
-        let _ = w.set_focus();
+    match app.get_webview_window(label) {
+        Some(w) => {
+            let _ = w.show();
+            let _ = w.set_focus();
+        }
+        // A destroyed window silently does nothing when its menu item is pressed,
+        // which reads to the user as a dead menu. Say so in the log.
+        None => debug_log::log(&format!("tray: window '{}' is gone, cannot show it", label)),
     }
 }
 
@@ -434,10 +443,12 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // The cheat sheet closes with its cross, but closing must not destroy
-            // it — the tray item reopens the same window, and a destroyed one
-            // cannot be shown again.
-            if window.label() == "shortcuts" {
+            // The utility windows close with their cross, but closing must not
+            // destroy them — the tray items reopen the same windows, and a
+            // destroyed one cannot be shown again. Every window the tray can open
+            // belongs here; forgetting one makes its menu item dead after the
+            // first close.
+            if TRAY_WINDOWS.contains(&window.label()) {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
                     let _ = window.hide();
@@ -544,4 +555,36 @@ fn tauri_nspanel_init() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 #[cfg(not(target_os = "macos"))]
 fn tauri_nspanel_init() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     tauri::plugin::Builder::new("noop").build()
+}
+
+#[cfg(test)]
+mod window_tests {
+    use super::TRAY_WINDOWS;
+
+    /// The popup itself. Everything else in the config is a window the tray opens,
+    /// and every one of those must survive being closed.
+    const POPUP: &str = "main";
+
+    #[test]
+    fn every_window_the_tray_opens_is_hidden_on_close_not_destroyed() {
+        let conf: serde_json::Value =
+            serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let labels = conf["app"]["windows"]
+            .as_array()
+            .expect("config has no windows")
+            .iter()
+            .map(|w| w["label"].as_str().expect("window without a label").to_string());
+
+        for label in labels {
+            if label == POPUP {
+                continue;
+            }
+            assert!(
+                TRAY_WINDOWS.contains(&label.as_str()),
+                "window '{}' is not in TRAY_WINDOWS: closing it would destroy it, \
+                 and its tray item would then open nothing",
+                label
+            );
+        }
+    }
 }
