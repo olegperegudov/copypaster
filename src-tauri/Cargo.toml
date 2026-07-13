@@ -35,6 +35,9 @@ tokio = { version = "1", features = ["time"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.26"
 objc = "0.2"
+# ⌘V is posted as a raw key event with the Command flag on it — the only way the
+# paste survives a non-Latin keyboard layout (see paste.rs).
+core-graphics = "0.24"
 # NSEvent's global monitor takes an Objective-C block and nothing else — that is
 # how we notice a click landing anywhere outside the popup.
 block = "0.1"

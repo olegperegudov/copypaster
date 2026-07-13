@@ -3,6 +3,19 @@
 Engineering release notes. Primary reader: future Claude. Detailed on purpose —
 enough to understand *what* changed and *why* without digging through diffs.
 
+## Unreleased
+
+**Pasting works on a Russian keyboard layout.** Picking a card put the clip on the clipboard and then pasted nothing — silently, every time, as long as a Cyrillic layout was active.
+
+The paste was synthesised as ⌘ + `Key::Unicode('v')`. enigo resolves that letter through the *active layout*: it walks keycodes 0–127 asking each what character it types, and takes the one that answers "v". On a Russian layout no key answers "v", the search falls through with `pressed_keycode = 0` — and keycode 0 is the A key. So the app sent **⌘A**. Nothing pasted, and the target app quietly selected all of its text instead. On ABC the same code found the V key on 9 and worked, which is why this looked intermittent rather than broken.
+
+Measured on the machine rather than guessed: `UCKeyTranslate` over both installed layouts — *Russian – PC* has no key producing "v" (key 9 types `м`), *ABC* has it on key 9.
+
+- ⌘V now goes out as a raw key event on the **physical** V key (`kVK_ANSI_V` = 9) with `CGEventFlagCommand` set on the event itself. The receiving app reads the chord from the event's flags, so it holds no matter which layout is active or which modifiers are physically down. Same synthesis Quill already uses for ⌘C — it hit this trap first, in terminals and Electron apps.
+- Windows keeps the enigo path (`Ctrl` + Unicode `v`). It has the same layout blind spot in principle; noted, not touched blind.
+
+Tests: the paste key is asserted to be the hardware V and explicitly *not* keycode 0 — the exact value that shipped. Note the limit: the keystroke itself crosses into another app, which no unit test here can observe.
+
 ## 0.1.14 — 2026-07-13
 
 **Backspace deletes the card you are standing on.** The key already meant "take this away" in the other two zones — it clears the app filter, and it deletes a character in search. On the cards it did nothing, and a clip you no longer wanted could only be waited out of the ring.

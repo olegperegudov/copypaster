@@ -441,12 +441,13 @@ dependencies = [
 
 [[package]]
 name = "copypaster"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "arboard",
  "base64 0.22.1",
  "block",
  "cocoa",
+ "core-graphics 0.24.0",
  "dirs",
  "enigo",
  "image",
