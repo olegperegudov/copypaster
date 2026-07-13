@@ -5,6 +5,8 @@ enough to understand *what* changed and *why* without digging through diffs.
 
 ## Unreleased
 
+**Content-Security-Policy is set** (`default-src 'self'`; no remote script, image or connection) and **every GitHub action is pinned to a commit SHA**, with the updater signing key reaching only the step that signs. The popup renders clipboard content and app icons, so an escaping bug there would have had a network to escape to; now it does not. The build jobs hold the key that signs auto-updates — a moved tag upstream would have been a signed malicious update for every user. Same change in Ribbit and Quill.
+
 **Passwords no longer land in the history, and the history is no longer world-readable.** Two bugs, one consequence: anything running as any user on the machine could read every clip ever copied, passwords included.
 
 - `clipboard.rs` now checks the pasteboard for the markers every password manager stamps on what it copies (`org.nspasteboard.ConcealedType`, plus the transient / auto-generated pair) and drops such a clip before it reaches the history. Windows has its own flag (`ExcludeClipboardContentFromMonitorProcessing`) — same treatment. Verified against a real staged pasteboard clip, both directions: `src-tauri/tests/stage_concealed_clip.swift` + `cargo test --lib -- --ignored concealed`.
