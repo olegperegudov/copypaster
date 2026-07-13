@@ -1,43 +1,43 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Горячие клавиши</title>
+    <title>Shortcuts</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="sheet">
     <div class="zone" data-zone="global">
-      <h2>Везде</h2>
+      <h2>Everywhere</h2>
       <div class="row">
         <span class="dpad"><i class="up">▲</i><i class="lf">◀</i><i class="dn">▼</i><i class="rt">▶</i></span>
-        <span>Навигация: вверх-вниз между зонами, влево-вправо внутри зоны</span>
+        <span>Navigation: up and down between zones, left and right inside a zone</span>
       </div>
-      <div class="row"><kbd>⌥V</kbd><span>Открыть и закрыть историю</span></div>
-      <div class="row"><kbd>esc</kbd><span>Закрыть</span></div>
+      <div class="row"><kbd>⌥V</kbd><span>Open and close the history</span></div>
+      <div class="row"><kbd>esc</kbd><span>Close</span></div>
     </div>
 
     <div class="zone" data-zone="cards">
-      <h2>На карточках</h2>
-      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Выбрать карточку</span></div>
-      <div class="row"><kbd>1</kbd>…<kbd>9</kbd><span>Вставить карточку сразу по номеру</span></div>
-      <div class="row"><kbd>⏎</kbd><span>Вставить выбранную</span></div>
+      <h2>On the cards</h2>
+      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Pick a card</span></div>
+      <div class="row"><kbd>1</kbd>…<kbd>9</kbd><span>Paste a card straight away by its number</span></div>
+      <div class="row"><kbd>⏎</kbd><span>Paste the selected one</span></div>
     </div>
 
     <div class="zone" data-zone="search">
-      <h2>В поиске</h2>
-      <div class="row"><span>Ищет с первой буквы, Enter не нужен</span></div>
-      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Курсор по буквам</span></div>
-      <div class="row"><kbd>1</kbd>…<kbd>9</kbd><span>Печатают цифры, а не выбирают карточку</span></div>
-      <div class="row"><kbd>⌫</kbd><span>Стирает символ</span></div>
+      <h2>In search</h2>
+      <div class="row"><span>Filters from the first letter, no Enter needed</span></div>
+      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Move the cursor between letters</span></div>
+      <div class="row"><kbd>1</kbd>…<kbd>9</kbd><span>Type digits instead of picking a card</span></div>
+      <div class="row"><kbd>⌫</kbd><span>Delete a character</span></div>
     </div>
 
     <div class="zone" data-zone="apps">
-      <h2>На приложениях</h2>
-      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Фильтр встаёт сразу, Enter не нужен</span></div>
-      <div class="row"><kbd>⌫</kbd><span>Сбросить фильтр и шагнуть вниз, в поиск</span></div>
+      <h2>On the apps</h2>
+      <div class="row"><kbd>◀</kbd><kbd>▶</kbd><span>Filter applies at once, no Enter needed</span></div>
+      <div class="row"><kbd>⌫</kbd><span>Clear the filter and step down into search</span></div>
     </div>
 
-    <p class="hint">Подсвечена зона, в которой вы сейчас стоите.</p>
+    <p class="hint">The zone you are standing in is highlighted.</p>
 
     <script type="module" src="shortcuts.js"></script>
   </body>

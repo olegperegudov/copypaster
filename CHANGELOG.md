@@ -1,80 +1,83 @@
 # Changelog
 
+Engineering release notes. Primary reader: future Claude. Detailed on purpose —
+enough to understand *what* changed and *why* without digging through diffs.
+
 ## 0.1.9 — 2026-07-13
 
-**История переживает перезапуск.** Было: клипы жили только в памяти — любой перезапуск, и в первую очередь обновление, стирал всё. Стало: история лежит на диске и поднимается при старте.
+**The history survives a restart.** Was: clips lived in memory only — any restart, an update above all, wiped them. Now: the history sits on disk and comes back at launch.
 
-- `index.json` — всё лёгкое (текст, приложение-источник, время), переписывается целиком на каждый новый клип.
-- `img/<id>.png` — картинки, отдельными файлами: пишутся один раз, а не переписываются заново каждый раз, когда скопировали слово. Файл клипа, выпавшего из очереди, удаляется — история не течёт на диск.
-- Индекс пишется во временный файл и переименовывается поверх: недописанный индекс хуже устаревшего, его читают на следующем старте.
-- Битый индекс = пустая история, а не падение. Номера клипов продолжаются с последнего восстановленного — иначе новый клип занял бы чужой номер и карточка вставляла бы не своё.
+- `index.json` — everything light (text, source app, timestamp), rewritten whole on every new clip.
+- `img/<id>.png` — images as separate files: written once, instead of being rewritten from scratch every time a word is copied. The file of a clip that fell off the ring is deleted, so the history does not leak onto the disk.
+- The index is written to a temp file and renamed over the old one: a half-written index is worse than a stale one, because it is what the next launch reads.
+- A corrupt index means an empty history, not a crash. Clip numbering continues from the last restored id — otherwise a new clip would take someone else's number and its card would paste the wrong thing.
 
-Тесты: круг «сохранил → поднял → карточка отдаёт те же байты», продолжение нумерации, уборка файла выпавшего клипа, битый индекс.
+Tests: the round trip "saved → restored → the card hands back the same bytes", numbering continuity, cleanup of the file behind a dropped clip, corrupt index.
 
-Клипы теперь лежат на диске в открытом виде (`~/Library/Application Support/copypaster/`) — как и у Paste. Пароли в буфере обмена оседают там же.
+Clips now sit on disk in the clear (`~/Library/Application Support/copypaster/`) — the same as Paste. Passwords that pass through the clipboard settle there too.
 
 ## 0.1.8 — 2026-07-13
 
-**Строка приложений — кольцо.** Влево с первой иконки уводит на последнюю, вправо с последней — на первую. Приложений мало, упираться в край незачем: одним направлением обходится вся строка.
+**The app row is a ring.** Left from the first icon lands on the last one, right from the last one lands on the first. There are few apps, so hitting a wall buys nothing: one direction walks the whole row.
 
-**Чип `⌫` больше не двигает иконки.** Было: он вставал первым элементом строки и в момент появления сдвигал все иконки вправо — рывок на каждое включение фильтра. Стало: чип висит язычком над строкой, в месте, которое зарезервировано всегда — появляется он или нет, иконки стоят там же.
+**The `⌫` chip no longer shoves the icons.** Was: it stood as the first element of the row and pushed every icon sideways the moment it appeared — a jerk on every filter. Now: the chip hangs as a tab above the row, in space that is reserved whether it shows up or not, so the icons stay put.
 
 ## 0.1.7 — 2026-07-13
 
-**Попап забирает клавиатуру себе.** Было: панель принимала клавиши, но приложение под ней оставалось активным — и всё, что попап не обработал сам, доставалось ему. Esc над открытым попапом закрывал окно Telegram, а не попап. Стало: пока попап открыт, активен он; когда он уходит — по Esc, по горячей клавише или после вставки — клавиатура возвращается тому приложению, из которого его позвали (по запомненному pid, ровно так же, как это уже делала вставка). Действий над попапом ровно три: выбрать карточку, Esc, клик мимо.
+**The popup takes the keyboard for itself.** Was: the panel accepted keys, but the app underneath stayed active — and everything the popup did not handle itself went through to it. Esc over an open popup closed the Telegram window, not the popup. Now: while the popup is open, it is the active one; when it leaves — by Esc, by the hotkey or after a paste — the keyboard goes back to the app it was called from (by the remembered pid, exactly the way pasting already did it). There are exactly three actions over the popup: pick a card, Esc, click away.
 
-Non-activating панель (механизм Spotlight) была выбрана, чтобы вставка попадала в исходное приложение. Но pid мы и так помним и возвращаем фокус явно, поэтому «не активироваться вообще» ничего не давало, а утечку клавиш давало.
+A non-activating panel (the Spotlight mechanism) was chosen so that the paste would land in the original app. But we remember the pid anyway and hand focus back explicitly, so "never activate at all" bought nothing and leaked keys.
 
-**Подъём на строку приложений сразу включает фильтр.** Было: перешёл на иконки — ничего не происходит, надо ещё нажать вбок; чип «⌫ сброс» появлялся только тогда. Стало: шаг вверх на иконки — это уже выбор: приложение под курсором фильтрует карточки, чип виден сразу.
+**Stepping up to the app row turns the filter on at once.** Was: you moved onto the icons and nothing happened — you had to press sideways as well, and only then did the "⌫ clear" chip appear. Now: a step up onto the icons is already a choice — the app under the cursor filters the cards, and the chip is visible right away.
 
 ## 0.1.6 — 2026-07-13
 
-**Шпаргалка — обычное окно.** Было: окно без рамки, поверх всех остальных, закрыть можно было только повторным щелчком по пункту меню — оно перекрывало всё, что открывалось после него. Стало: системная рамка с крестиком, `⌘W` и Esc закрывают, поверх других окон не висит. Закрытие прячет окно, а не уничтожает его, иначе пункт меню не смог бы открыть его снова.
+**The shortcuts sheet is a normal window.** Was: a frameless window on top of everything else, closable only by clicking the menu item again — it covered whatever opened after it. Now: a system frame with a close button, `⌘W` and Esc close it, and it does not float above other windows. Closing hides the window instead of destroying it, otherwise the menu item could not open it again.
 
-**Понятное имя пункта меню.** Было: «Мгновенные скриншоты» — название говорило о механизме, а не о результате. Стало: «Скриншот сразу в буфер (без миниатюры)» — включённая галочка убирает плавающую миниатюру macOS, и снимок попадает в буфер сразу, а не через пять секунд.
+**A menu item named after the result.** Was: "Instant screenshots" — the name spoke about the mechanism, not the outcome. Now: "Screenshot straight to clipboard (no thumbnail)" — ticking it removes the macOS floating thumbnail, and the capture reaches the clipboard at once instead of five seconds later.
 
 ## 0.1.4 — 2026-07-12
 
-Правки по первой живой обкатке.
+Fixes from the first live run.
 
-**Элементы непрозрачные.** Было: карточки, поиск и полоска приложений просвечивали (72% непрозрачности + размытие фона) — поверх пёстрых обоев текст читался с трудом. Стало: сплошной тёмный фон. Общей подложки под попапом по-прежнему нет — зоны так и парят над экраном, но каждая из них теперь честно перекрывает то, что под ней.
+**The elements are opaque.** Was: cards, search and the app row were see-through (72% opacity + background blur) — over a busy wallpaper the text was hard to read. Now: a solid dark background. There is still no shared backdrop under the popup — the zones keep floating over the screen, but each of them now honestly covers what is beneath it.
 
-**Клик мимо закрывает попап** — не только Esc.
-- Клик вне окна ловит глобальный монитор мыши (`NSEvent`): non-activating-панель никогда не становится активным приложением, поэтому события «потерял фокус» ей не приходит и повесить закрытие больше не на что. Клики внутри своего окна монитор не видит — выбор карточки не закрывает попап сам из-под себя. Разрешение «Универсальный доступ» такому монитору не нужно (оно нужно только для клавиатурных).
-- Клик по пустой части окна ловит сам попап: окно — полоса во всю ширину экрана, и сквозь неё видно рабочий стол, так что клик по пустому месту — это клик мимо.
-- На Windows панель — обычное окно, там срабатывает потеря фокуса.
+**A click away closes the popup** — not only Esc.
+- Clicks outside the window are caught by a global mouse monitor (`NSEvent`): a non-activating panel never becomes the active app, so it never gets a "lost focus" event and there is nothing else to hang the closing on. The monitor does not see clicks inside our own window — picking a card does not close the popup from under itself. Such a monitor needs no Accessibility permission (that is only for keyboard ones).
+- Clicks on the empty part of the window are caught by the popup itself: the window is a full-width strip and the desktop shows through it, so a click on empty space is a click away.
+- On Windows the panel is a normal window, where focus loss fires.
 
-**Клавиша `⌫` видна, когда есть что сбрасывать.** Было: фильтр по приложению включался стрелкой, а как его снять — знал только тот, кто читал шпаргалку. Стало: пока фильтр включён, слева в полоске приложений стоит чип «⌫ сброс» — и подсказывает клавишу, и работает как кнопка.
+**The `⌫` key is visible when there is something to clear.** Was: the app filter went on with an arrow key, and only a reader of the shortcuts sheet knew how to take it off. Now: while the filter is on, a "⌫ clear" chip sits at the left of the app row — it names the key and works as a button.
 
 ## 0.1.0 — 2026-07-12
 
-Полная пересборка: Swift/SwiftUI → Tauri 2 (Rust + HTML/CSS/JS).
+A full rebuild: Swift/SwiftUI → Tauri 2 (Rust + HTML/CSS/JS).
 
-### Почему стек сменился
+### Why the stack changed
 
-Обновления, подпись и CI у Ribbit и Quill построены на Tauri: манифест `latest.json` в GitHub Releases, minisign-подпись, фоновая проверка раз в 30 минут, авто-бамп версии на каждый push в `main`. Swift-приложение этот конвейер повторить не может — пришлось бы заводить второй, отдельный (Sparkle + свой workflow). Приложение было маленьким (~680 строк, половина — UI, который всё равно переписывался), поэтому дешевле перенести его на общие рельсы, чем содержать две схемы. Заодно появилась сборка под Windows.
+Updates, signing and CI for Ribbit and Quill are built on Tauri: a `latest.json` manifest in GitHub Releases, a minisign signature, a background check every 30 minutes, an auto version bump on every push to `main`. A Swift app cannot reuse that pipeline — it would need a second, separate one (Sparkle plus its own workflow). The app was small (~680 lines, half of them UI that was being rewritten anyway), so moving it onto the shared rails was cheaper than keeping two schemes alive. A Windows build came along for free.
 
-### Что стало
+### What it became
 
-**Мгновенные скриншоты.** Было: скриншот доезжал до буфера за ~6,5 с, и `⌘V` сразу после Shift-Cmd-4 вставлял предыдущий клип. Стало: до ~1,5 с, а с выключенной плавающей миниатюрой — сразу.
-- Плавающая миниатюра macOS (~5 с) — главная часть задержки: пока она висит, файла на диске ещё нет. Пункт меню «Мгновенные скриншоты» её выключает.
-- Папка скриншотов слушается событиями файловой системы вместо опроса раз в секунду (−1 с).
-- Скриншот кладётся в историю напрямую, без лишнего круга «положить в буфер → дождаться своего же опроса буфера» (−0,5 с).
+**Instant screenshots.** Was: a screenshot reached the clipboard in ~6.5 s, and `⌘V` right after Shift-Cmd-4 pasted the previous clip. Now: ~1.5 s, and with the floating thumbnail off — immediately.
+- The macOS floating thumbnail (~5 s) is the bulk of the delay: while it hangs there, the file is not on disk yet. The "Instant screenshots" menu item turns it off.
+- The screenshots folder is watched through filesystem events instead of a poll once a second (−1 s).
+- A screenshot goes straight into the history, skipping the detour "put it on the clipboard → wait for our own clipboard poll" (−0.5 s).
 
-**Попап вместо списка строк.** Было: вертикальный список 280×280, одна усечённая строка на клип, картинка сплющена в 80×40. Стало: три парящих элемента поверх экрана, без общей подложки — карусель карточек, строка поиска, полоска приложений.
-- Карточка показывает содержимое, приложение-источник с иконкой, тип и возраст клипа.
-- Живой поиск: фильтрует с первой буквы, совпадения подсвечены фуксией (`#c25cce` — та же подсветка и то же правило «совпадение по началу слова», что в поиске Ribbit).
-- Фильтр по приложению: стрелка встаёт на приложение — карточки сузились, Enter не нужен. `⌫` сбрасывает фильтр и уводит фокус вниз, в поиск.
-- Навигация по двум осям: вверх-вниз между зонами, влево-вправо внутри зоны. Каждая зона помнит, где стоял курсор.
-- Попап — non-activating NSPanel: он принимает клавиатуру, но не забирает фокус у приложения под ним, поэтому вставка попадает туда, где вы работали.
+**A popup instead of a list of lines.** Was: a 280×280 vertical list, one truncated line per clip, images squashed into 80×40. Now: three elements floating over the screen with no shared backdrop — a carousel of cards, a search field, an app row.
+- A card shows the content, the source app with its icon, the kind and the age of the clip.
+- Live search: filters from the first letter, matches highlighted in fuchsia (`#c25cce` — the same mark and the same "match at the start of a word" rule as Ribbit's log search).
+- App filter: the arrow lands on an app and the cards narrow, no Enter needed. `⌫` clears the filter and takes focus down into search.
+- Navigation on two axes: up and down between zones, left and right inside a zone. Each zone remembers where the cursor stood.
+- The popup is a non-activating NSPanel: it accepts the keyboard but does not pull focus from the app underneath, so the paste lands where you were working.
 
-**Меню в менюбаре.** Проверить обновления (после находки — «Обновить до vX.Y.Z», иконка зеленеет), Горячие клавиши, Мгновенные скриншоты, версия, выход.
+**A menu-bar menu.** Check for updates (once one is found — "Update to vX.Y.Z", and the icon turns green), Shortcuts, Instant screenshots, the version, quit.
 
-**Шпаргалка по клавишам** — отдельное окно, подсвечивает зону, в которой вы стоите: одна и та же клавиша в разных зонах делает разное (цифры выбирают карточку — или печатаются в поиске; `⌫` стирает символ — или сбрасывает фильтр).
+**A shortcuts sheet** — a separate window that highlights the zone you are standing in: the same key does different things in different zones (digits pick a card — or get typed into search; `⌫` deletes a character — or clears the filter).
 
-**Подпись.** Стабильный self-signed сертификат «CopyPaster Code Signing» (как у Ribbit): разрешение «Универсальный доступ» привязывается к сертификату, а не к хешу сборки, и переживает обновления. Ad-hoc подпись заставляла бы выдавать его заново после каждого релиза.
+**Signing.** A stable self-signed certificate, "CopyPaster Code Signing" (as in Ribbit): the Accessibility permission binds to the certificate rather than to the build hash, and survives updates. An ad-hoc signature would make the user grant it again after every release.
 
-### Тесты
+### Tests
 
-- Rust: история — порядок, дедуп подряд идущих дублей, предел размера, обрезка превью.
-- JS: поиск по началу слова, подсветка, экранирование HTML (скопированный `<img onerror=…>` не должен исполниться в карточке), фильтры и их сложение, счётчики в строке приложений.
+- Rust: the history — order, dedup of consecutive duplicates, size limit, preview truncation.
+- JS: word-prefix search, highlighting, HTML escaping (a copied `<img onerror=…>` must not run inside a card), filters and their combination, the counters in the app row.

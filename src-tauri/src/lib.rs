@@ -137,7 +137,7 @@ async fn install_update(app: AppHandle) -> Result<(), String> {
                 .map_err(|e| e.to_string())?;
             app.restart();
         }
-        Ok(None) => Err("Обновлений нет".into()),
+        Ok(None) => Err("No updates available".into()),
         Err(e) => Err(e.to_string()),
     }
 }
@@ -146,7 +146,7 @@ async fn install_update(app: AppHandle) -> Result<(), String> {
 /// install action. Called from both the manual check and the background poll.
 fn announce_update(app: &AppHandle, version: &str) {
     if let Some(item) = app.try_state::<MenuItem<tauri::Wry>>() {
-        let _ = item.set_text(format!("Обновить до v{}", version));
+        let _ = item.set_text(format!("Update to v{}", version));
     }
     if let Some(tray) = app.tray_by_id("main") {
         if let Ok(icon) = tauri::image::Image::from_bytes(TRAY_UPDATE_ICON) {
@@ -343,15 +343,15 @@ pub fn run() {
 /// Menu-bar menu. Mirrors Ribbit/Quill: update first, then the utilities, then
 /// the version, then quit.
 fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    let update = MenuItem::with_id(app, "update", "Проверить обновления", true, None::<&str>)?;
-    let shortcuts = MenuItem::with_id(app, "shortcuts", "Горячие клавиши", true, None::<&str>)?;
+    let update = MenuItem::with_id(app, "update", "Check for updates", true, None::<&str>)?;
+    let shortcuts = MenuItem::with_id(app, "shortcuts", "Shortcuts", true, None::<&str>)?;
     // Named after what the user gets, not after the macOS pref it flips: ticking
     // it turns off the floating thumbnail, and the capture reaches the clipboard
     // at once instead of five seconds later.
     let instant = CheckMenuItem::with_id(
         app,
         "instant",
-        "Скриншот сразу в буфер (без миниатюры)",
+        "Screenshot straight to clipboard (no thumbnail)",
         true,
         instant_state(),
         None::<&str>,
@@ -363,7 +363,7 @@ fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         false,
         None::<&str>,
     )?;
-    let quit = MenuItem::with_id(app, "quit", "Выйти", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit CopyPaster", true, None::<&str>)?;
 
     let menu = MenuBuilder::new(app)
         .item(&update)
@@ -379,7 +379,7 @@ fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(update.clone());
 
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("CopyPaster — история буфера (⌥V)")
+        .tooltip("CopyPaster — clipboard history (⌥V)")
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(move |app, event| match event.id().as_ref() {

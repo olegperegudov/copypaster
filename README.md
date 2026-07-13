@@ -5,62 +5,62 @@
 <h1 align="center">CopyPaster</h1>
 
 <p align="center">
-  История буфера обмена в менюбаре macOS.<br/>
-  <code>⌥V</code> — карточки последних клипов, живой поиск, фильтр по приложению, вставка в то окно, где вы были.
+  Clipboard history in the macOS menu bar.<br/>
+  <code>⌥V</code> — cards of your recent clips, live search, a filter by app, and a paste back into the window you came from.
 </p>
 
 <p align="center">
-  <b>Скриншоты сразу в буфере</b> — не через пять секунд, пока гаснет плавающая миниатюра<br/>
-  <b>Всё локально</b> — история лежит на вашем диске, без облака и телеметрии
+  <b>Screenshots land in the clipboard at once</b> — not five seconds later, while the floating thumbnail fades<br/>
+  <b>Everything stays local</b> — the history lives on your disk, no cloud, no telemetry
 </p>
 
-## Установка (macOS)
+## Install (macOS)
 
-1. Скачайте DMG со [страницы релизов](https://github.com/olegperegudov/copypaster/releases/latest) — `aarch64` для Apple Silicon, `x64` для Intel.
-2. Перетащите CopyPaster в Applications и запустите **правым кликом → Открыть** (приложение не нотаризовано у Apple).
-3. Разрешите **Универсальный доступ** (Системные настройки → Конфиденциальность и безопасность → Универсальный доступ). Без него приложение не сможет вставлять за вас.
+1. Download the DMG from the [Releases](https://github.com/olegperegudov/copypaster/releases/latest) page — `aarch64` for Apple Silicon, `x64` for Intel.
+2. Drag CopyPaster into Applications and open it with **right click → Open** (the app is not notarized with Apple).
+3. Grant **Accessibility** (System Settings → Privacy & Security → Accessibility). Without it the app cannot paste on your behalf.
 
-Обновления приходят сами: иконка в менюбаре загорается зелёным, а в её меню появляется «Обновить до vX.Y.Z».
+Updates arrive on their own: the menu-bar icon turns green and its menu offers "Update to vX.Y.Z".
 
-## Как пользоваться
+## How to use it
 
-`⌥V` поднимает историю поверх экрана. Три зоны, две оси:
+`⌥V` raises the history over your screen. Three zones, two axes:
 
-- **Вверх-вниз** — между зонами: карточки → поиск → приложения.
-- **Влево-вправо** — внутри зоны, где стоит курсор.
+- **Up and down** — between zones: cards → search → apps.
+- **Left and right** — inside the zone where the cursor stands.
 
-| Где | Клавиши |
+| Where | Keys |
 |---|---|
-| Карточки | `←` `→` выбрать, `⏎` вставить, `1`…`9` вставить по номеру |
-| Поиск | ищет с первой буквы, Enter не нужен; `←` `→` — курсор по буквам |
-| Приложения | `←` `→` ставят фильтр сразу; `⌫` сбрасывает его и уводит вниз, в поиск |
-| Везде | `esc` закрыть |
+| Cards | `←` `→` select, `⏎` paste, `1`…`9` paste by number |
+| Search | filters from the first letter, no Enter needed; `←` `→` move the cursor between letters |
+| Apps | `←` `→` apply the filter at once; `⌫` clears it and takes you down into search |
+| Everywhere | `esc` closes |
 
-Полная шпаргалка — в меню иконки, пункт «Горячие клавиши». Она подсвечивает зону, в которой вы стоите: одна и та же клавиша в разных зонах делает разное — цифры выбирают карточку, а в поиске просто печатаются.
+The full cheat sheet lives in the icon menu, under "Shortcuts". It highlights the zone you are standing in: the same key does different things in different zones — digits pick a card, while in search they simply get typed.
 
-## Мгновенные скриншоты
+## Instant screenshots
 
-Shift-Cmd-4 не кладёт картинку в буфер: он сохраняет файл. Пока в углу висит плавающая миниатюра, файла на диске ещё нет — macOS пишет его, только когда она угаснет, а это около пяти секунд. Всё это время «скопировать скриншот» вставляет предыдущий клип.
+Shift-Cmd-4 does not put an image on the clipboard: it saves a file. While the floating thumbnail sits in the corner, that file is not on disk yet — macOS writes it only once the thumbnail fades, and that takes about five seconds. All that time "copy the screenshot" pastes the previous clip.
 
-Пункт меню **«Мгновенные скриншоты»** выключает эту миниатюру. Тогда файл ложится на диск сразу, CopyPaster ловит его событием файловой системы, и картинка оказывается и в истории, и в буфере — обычный `⌘V` вставит именно её. Роль превью берёт на себя карточка.
+The menu item **"Screenshot straight to clipboard (no thumbnail)"** turns that thumbnail off. The file then lands on disk immediately, CopyPaster catches it through a filesystem event, and the image ends up both in the history and on the clipboard — a plain `⌘V` pastes exactly it. The card takes over the role of the preview.
 
-## Разработка
+## Development
 
 ```bash
 npm install
-npm run tauri dev                  # запустить
-npm test                           # тесты поиска, фильтрации, подсветки
-cd src-tauri && cargo test --lib   # тесты истории
+npm run tauri dev                  # run it
+npm test                           # search, filtering and highlighting tests
+cd src-tauri && cargo test --lib   # history tests
 ```
 
-Каждый push в `main` — релиз: CI сам поднимает patch-версию, собирает macOS (Apple Silicon и Intel по отдельности) и Windows, публикует релиз и манифест автообновления.
+Every push to `main` is a release: CI bumps the patch version itself, builds macOS (Apple Silicon and Intel separately) and Windows, then publishes the release and the auto-update manifest.
 
-Лог текущей сессии: `~/Library/Application Support/copypaster/debug.log`.
+The current session log: `~/Library/Application Support/copypaster/debug.log`.
 
-## Стек
+## Stack
 
-Tauri 2 — Rust снаружи, HTML/CSS/JS внутри, одна кодовая база на macOS и Windows. Те же рельсы, что у [Ribbit](https://github.com/olegperegudov/ribbit) и [Quill](https://github.com/olegperegudov/quill): общий конвейер сборки, подписи и обновлений на все три приложения.
+Tauri 2 — Rust on the outside, HTML/CSS/JS on the inside, one codebase for macOS and Windows. The same rails as [Ribbit](https://github.com/olegperegudov/ribbit) and [Quill](https://github.com/olegperegudov/quill): a shared build, signing and update pipeline across all three apps.
 
-## Лицензия
+## License
 
 MIT.

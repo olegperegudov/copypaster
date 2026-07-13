@@ -162,7 +162,7 @@ fn icon_data_url(_bundle: &str) -> String {
 /// in front would put them in the wrong filter bucket.
 pub fn screenshot_source() -> SourceApp {
     SourceApp {
-        name: "Снимок экрана".into(),
+        name: "Screenshot".into(),
         bundle: "system.screenshot".into(),
         icon: String::new(),
     }

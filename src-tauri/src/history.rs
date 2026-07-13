@@ -28,7 +28,7 @@ pub struct ClipItem {
     pub id: u64,
     pub payload: Payload,
     pub app: SourceApp,
-    /// Unix epoch, seconds. The UI turns this into "4 мин".
+    /// Unix epoch, seconds. The UI turns this into "4 min".
     pub created_at: u64,
 }
 
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn text_preview_is_trimmed_but_char_count_is_full() {
         let mut h = History::new();
-        let long = "я".repeat(PREVIEW_CHARS + 50);
+        let long = "a".repeat(PREVIEW_CHARS + 50);
         h.add(Payload::Text(long), app(), 1);
         let v = h.view();
         assert_eq!(v[0].text.chars().count(), PREVIEW_CHARS);

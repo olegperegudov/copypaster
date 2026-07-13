@@ -1,7 +1,8 @@
 // Live search over the clipboard history.
 //
 // Matching is by word prefix, and the matched prefix is what gets highlighted —
-// typing "оле" marks the first three letters of "Олег". Same rule and same
+// typing "ole" marks the first three letters of "Oleg". Any script counts as
+// letters here, Cyrillic included. Same rule and same
 // fuchsia mark as Ribbit's log search, so the two apps read alike.
 
 /** Splits into words the way both apps do: letters and digits, any script. */
@@ -85,13 +86,13 @@ export function appRow(clips, query) {
   return [...byBundle.values()];
 }
 
-/** "только что" / "4 мин" / "2 ч" / "3 дн" — the card footer. */
+/** "just now" / "4 min" / "2 h" / "3 d" — the card footer. */
 export function age(createdAt, nowSecs) {
   const secs = Math.max(0, nowSecs - createdAt);
-  if (secs < 45) return "только что";
+  if (secs < 45) return "just now";
   const mins = Math.round(secs / 60);
-  if (mins < 60) return `${mins} мин`;
+  if (mins < 60) return `${mins} min`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} ч`;
-  return `${Math.round(hours / 24)} дн`;
+  if (hours < 24) return `${hours} h`;
+  return `${Math.round(hours / 24)} d`;
 }

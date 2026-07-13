@@ -101,7 +101,7 @@ function appIcon(app) {
 function renderSearch(visible) {
   el.count.textContent =
     state.query.trim() && state.clips.length
-      ? `${visible} из ${state.clips.length}`
+      ? `${visible} of ${state.clips.length}`
       : "";
   if (el.query.value !== state.query) el.query.value = state.query;
 }
@@ -134,7 +134,7 @@ function renderCards(list) {
     foot.className = "card-foot";
     const badge = document.createElement("span");
     badge.className = clip.kind === "image" ? "badge image" : "badge";
-    badge.textContent = clip.kind === "image" ? "картинка" : "текст";
+    badge.textContent = clip.kind === "image" ? "image" : "text";
     const meta = document.createElement("span");
     meta.textContent =
       clip.kind === "image"

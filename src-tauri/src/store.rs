@@ -211,7 +211,7 @@ mod tests {
     fn a_restart_keeps_the_clips() {
         let store = temp_store();
         let mut h = History::new();
-        h.add(Payload::Text("привет".into()), app(), 10);
+        h.add(Payload::Text("hello".into()), app(), 10);
         h.add(Payload::Image { png: png(), width: 800, height: 600 }, app(), 20);
         store.save(h.items());
 
@@ -219,7 +219,7 @@ mod tests {
         restored.restore(store.load());
         let v = restored.view();
         assert_eq!(v.len(), 2);
-        assert_eq!(v[1].text, "привет");
+        assert_eq!(v[1].text, "hello");
         assert_eq!(v[0].kind, "image");
         assert_eq!((v[0].width, v[0].height), (800, 600));
     }
