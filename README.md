@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="icon.png" width="96" alt="CopyPaster logo" />
+  <img src="src/parrot.png" width="96" alt="CopyPaster logo" />
 </p>
 
 <h1 align="center">CopyPaster</h1>
 
 <p align="center">
   Clipboard history in the macOS menu bar.<br/>
-  <code>⌥V</code> — cards of your recent clips, live search, a filter by app, and a paste back into the window you came from.
+  <code>⌥V</code> — pick a clip, it goes back into the window you came from.
 </p>
 
 <p align="center">
@@ -14,15 +14,29 @@
   <b>Everything stays local</b> — the history lives on your disk, no cloud, no telemetry
 </p>
 
-## What it looks like
+## The history
 
-`⌥V` — the history floats over whatever you were doing: a card per clip, the source app on the head, the age on the foot.
+`⌥V` — a card per clip. `⏎` or `1`…`9` pastes.
 
 ![The popup over the desktop](docs/screenshots/popup.png)
 
-Type, and it narrows from the first letter — matches marked, the app row collapsing to the apps that still have something to show.
+## Filter by app
+
+The icon row on top. Step onto an app — the cards narrow to it.
+
+![The app filter](docs/screenshots/filter.png)
+
+## Search
+
+Type. It filters from the first letter, matches marked.
 
 ![Live search](docs/screenshots/search.png)
+
+## Keys
+
+Up and down between zones, left and right inside one. The sheet lives in the icon menu.
+
+![The shortcuts sheet](docs/screenshots/shortcuts.png)
 
 ## Install (macOS)
 
@@ -30,31 +44,13 @@ Type, and it narrows from the first letter — matches marked, the app row colla
 2. Drag CopyPaster into Applications and open it with **right click → Open** (the app is not notarized with Apple).
 3. Grant **Accessibility** (System Settings → Privacy & Security → Accessibility). Without it the app cannot paste on your behalf.
 
-Updates arrive on their own: the menu-bar icon turns green and its menu offers "Update to vX.Y.Z".
-
-## How to use it
-
-`⌥V` raises the history over your screen. Three zones, two axes:
-
-- **Up and down** — between zones: cards → search → apps.
-- **Left and right** — inside the zone where the cursor stands.
-
-| Where | Keys |
-|---|---|
-| Cards | `←` `→` select, `⏎` paste, `1`…`9` paste by number |
-| Search | filters from the first letter, no Enter needed; `←` `→` move the cursor between letters |
-| Apps | `←` `→` apply the filter at once; `⌫` clears it and takes you down into search |
-| Everywhere | `esc` closes |
-
-The full cheat sheet lives in the icon menu, under "Shortcuts". It highlights the zone you are standing in: the same key does different things in different zones — digits pick a card, while in search they simply get typed.
-
-![The shortcuts sheet](docs/screenshots/shortcuts.png)
+Updates arrive on their own: the menu-bar icon gets a green dot and its menu offers "Update to vX.Y.Z".
 
 ## Instant screenshots
 
-Shift-Cmd-4 does not put an image on the clipboard: it saves a file. While the floating thumbnail sits in the corner, that file is not on disk yet — macOS writes it only once the thumbnail fades, and that takes about five seconds. All that time "copy the screenshot" pastes the previous clip.
+Shift-Cmd-4 saves a file instead of copying an image, and while the floating thumbnail hangs in the corner that file is not on disk yet — about five seconds during which "copy the screenshot" pastes the previous clip.
 
-The menu item **"Screenshot straight to clipboard (no thumbnail)"** turns that thumbnail off. The file then lands on disk immediately, CopyPaster catches it through a filesystem event, and the image ends up both in the history and on the clipboard — a plain `⌘V` pastes exactly it. The card takes over the role of the preview.
+The menu item **"Screenshot straight to clipboard (no thumbnail)"** turns the thumbnail off. The file lands at once, CopyPaster catches it, and a plain `⌘V` pastes the screenshot.
 
 ## Development
 
