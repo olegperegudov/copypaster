@@ -14,6 +14,16 @@
   <b>Everything stays local</b> — the history lives on your disk, no cloud, no telemetry
 </p>
 
+## What it looks like
+
+`⌥V` — the history floats over whatever you were doing: a card per clip, the source app on the head, the age on the foot.
+
+![The popup over the desktop](docs/screenshots/popup.png)
+
+Type, and it narrows from the first letter — matches marked, the app row collapsing to the apps that still have something to show.
+
+![Live search](docs/screenshots/search.png)
+
 ## Install (macOS)
 
 1. Download the DMG from the [Releases](https://github.com/olegperegudov/copypaster/releases/latest) page — `aarch64` for Apple Silicon, `x64` for Intel.
@@ -37,6 +47,8 @@ Updates arrive on their own: the menu-bar icon turns green and its menu offers "
 | Everywhere | `esc` closes |
 
 The full cheat sheet lives in the icon menu, under "Shortcuts". It highlights the zone you are standing in: the same key does different things in different zones — digits pick a card, while in search they simply get typed.
+
+![The shortcuts sheet](docs/screenshots/shortcuts.png)
 
 ## Instant screenshots
 
