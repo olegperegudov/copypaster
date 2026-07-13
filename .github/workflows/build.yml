@@ -140,6 +140,21 @@ jobs:
           releaseDraft: false
           prerelease: false
 
+      # Re-upload the installer under a stable, version-less name so the README
+      # download button can link straight at the file
+      # (releases/latest/download/<name>). Tauri's own asset names carry the
+      # version, so any direct link to them dies on the next bump — which is why
+      # the buttons used to dump the user on the releases page instead.
+      - name: Publish stable-named Windows installer
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          exe=$(ls src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe | head -1)
+          cp "$exe" CopyPaster_Windows_Setup.exe
+          gh release upload "$TAG" CopyPaster_Windows_Setup.exe --clobber --repo "$GITHUB_REPOSITORY"
+
   build-macos:
     # Runs AFTER build-windows, not beside it: tauri-action publishes latest.json
     # by read-modify-writing the same release asset, and two jobs uploading at
@@ -283,6 +298,20 @@ jobs:
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
+
+      # Stable, version-less copies for the README download buttons (both Macs).
+      # Direct links: releases/latest/download/CopyPaster_macOS_*.dmg.
+      - name: Publish stable-named macOS installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          arm=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          intel=$(ls src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          cp "$arm" CopyPaster_macOS_AppleSilicon.dmg
+          cp "$intel" CopyPaster_macOS_Intel.dmg
+          gh release upload "$TAG" CopyPaster_macOS_AppleSilicon.dmg CopyPaster_macOS_Intel.dmg --clobber --repo "$GITHUB_REPOSITORY"
 
       # The in-app updater is only as good as latest.json. Fail loudly here rather
       # than ship a manifest that silently strands one platform on an old version.

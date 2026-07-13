@@ -5,6 +5,12 @@ enough to understand *what* changed and *why* without digging through diffs.
 
 ## Unreleased
 
+**The README is a shop window, not a manual.** It opens with three fat buttons that download the installer for a platform *directly*. The old page had no download button at all — the install section pointed at `/releases/latest`, so "download" meant landing in a list of files and picking the right one, and everything below it (npm, cargo, the session log path) was written for a developer.
+
+- A direct link can only be made to a name that survives the next version bump, so CI now also uploads version-less copies of each installer (`CopyPaster_macOS_AppleSilicon.dmg`, `CopyPaster_macOS_Intel.dmg`, `CopyPaster_Windows_Setup.exe`) alongside Tauri's own assets, which the updater keeps reading.
+- "Releases" now points at `/releases` (every version, so a bad build can be rolled back), not `/releases/latest` (one release and its five files — which reads as variants of the same thing).
+- Stack, local build, tests, release pipeline, signing and the layout trap moved to `docs/DEVELOPMENT.md`.
+
 **Pasting works on a Russian keyboard layout.** Picking a card put the clip on the clipboard and then pasted nothing — silently, every time, as long as a Cyrillic layout was active.
 
 The paste was synthesised as ⌘ + `Key::Unicode('v')`. enigo resolves that letter through the *active layout*: it walks keycodes 0–127 asking each what character it types, and takes the one that answers "v". On a Russian layout no key answers "v", the search falls through with `pressed_keycode = 0` — and keycode 0 is the A key. So the app sent **⌘A**. Nothing pasted, and the target app quietly selected all of its text instead. On ABC the same code found the V key on 9 and worked, which is why this looked intermittent rather than broken.
