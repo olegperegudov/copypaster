@@ -32,35 +32,33 @@ Then:
 
 CopyPaster is built and used on macOS. The Windows build exists and installs, but it isn't tested nearly as much — expect rough edges.
 
-## The history
+## Everything you copied, still there
 
-`⌥V` — a card per clip. `⏎` or `1`…`9` pastes it back where you were.
+A card per clip, newest first. `⏎` or `1`…`9` — and it's back in the window you came from.
 
 ![The popup over the desktop](docs/screenshots/popup.png)
 
-## Filter by app
+## Too many clips? Narrow to the app
 
-The icon row on top. Step onto an app — the cards narrow to it.
+The icon row on top. Step onto an app — only its clips remain.
 
 ![The app filter](docs/screenshots/filter.png)
 
-## Search
+## Or just start typing
 
-Just type. It filters from the first letter, matches marked.
+Search filters from the first letter, matches marked. No Enter needed.
 
 ![Live search](docs/screenshots/search.png)
 
-## Keys
+## Hands stay on the keyboard
 
-Up and down between zones, left and right inside one. The sheet lives in the menu-bar menu.
+Up and down between zones, left and right inside one. The full sheet lives in the menu-bar menu.
 
 ![The shortcuts sheet](docs/screenshots/shortcuts.png)
 
-## Instant screenshots
+## Screenshots that are already on the clipboard
 
-Shift-Cmd-4 saves a file rather than copying an image, and while the little thumbnail hangs in the corner that file is not on disk yet — five seconds during which "copy the screenshot" pastes the previous clip.
-
-Tick **"Screenshot straight to clipboard (no thumbnail)"** in the menu. The file lands at once, CopyPaster catches it, and a plain `⌘V` pastes the screenshot.
+While macOS hangs that little thumbnail in the corner, the screenshot is not on disk yet — so pasting it right away pastes the *previous* clip. Tick **"Screenshot straight to clipboard"** in the menu bar: the file lands at once, CopyPaster catches it, `⌘V` pastes the picture.
 
 ## Updates
 

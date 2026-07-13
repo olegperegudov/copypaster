@@ -40,6 +40,16 @@ Not notarized (that needs a paid Apple account), so the first open still needs `
 
 ⌘V is posted as a raw `CGEvent` on the **physical** V key (`kVK_ANSI_V` = 9) with the Command flag set on the event. Never address the key by its letter: a lookup through the active layout finds no "v" on a Cyrillic layout, falls through to keycode 0 — which is the A key — and the paste silently goes out as ⌘A. That shipped once; see the 0.1.15 entry in the [changelog](../CHANGELOG.md).
 
+## Debugging
+
+DevTools are off in release builds — `console.log` is invisible. The frontend logs through the `js_log` command instead; it lands in the session log next to the Rust side's own lines, so a UI event and the backend's reaction sit in one timeline.
+
+```js
+invoke("js_log", { message: `paste: ${id}` });
+```
+
+Remove the probes in the same change that fixes the bug.
+
 ## Where things live
 
 | | |

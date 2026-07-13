@@ -5,6 +5,10 @@ enough to understand *what* changed and *why* without digging through diffs.
 
 ## Unreleased
 
+**README feature sections say what you get, not what the control is called.** "The history / Filter by app / Search / Keys" became "Everything you copied, still there / Too many clips? Narrow to the app / Or just start typing / Hands stay on the keyboard" — same screenshots, headings that read like a benefit, matching Ribbit's. The screenshot paragraph lost half its prose.
+
+**`docs/DEVELOPMENT.md` gained the Debugging section** (the `js_log` command; DevTools are off in release builds), which Ribbit's copy already had.
+
 **The README is a shop window, not a manual.** It opens with three fat buttons that download the installer for a platform *directly*. The old page had no download button at all — the install section pointed at `/releases/latest`, so "download" meant landing in a list of files and picking the right one, and everything below it (npm, cargo, the session log path) was written for a developer.
 
 - A direct link can only be made to a name that survives the next version bump, so CI now also uploads version-less copies of each installer (`CopyPaster_macOS_AppleSilicon.dmg`, `CopyPaster_macOS_Intel.dmg`, `CopyPaster_Windows_Setup.exe`) alongside Tauri's own assets, which the updater keeps reading.
