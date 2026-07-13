@@ -60,6 +60,12 @@ Up and down between zones, left and right inside one. The full sheet lives in th
 
 While macOS hangs that little thumbnail in the corner, the screenshot is not on disk yet — so pasting it right away pastes the *previous* clip. Tick **"Screenshot straight to clipboard"** in the menu bar: the file lands at once, CopyPaster catches it, `⌘V` pastes the picture.
 
+## Settings
+
+Click the parrot in the menu bar → **Settings**. How long clips are kept (a day, a week, a month, or no limit — a week by default), and whether a screenshot lands on the clipboard at once.
+
+![Settings](docs/screenshots/settings.png)
+
 ## Updates
 
 The parrot in the menu bar turns green when a new version is out. Click it, pick the update line — done.
@@ -68,6 +74,7 @@ The parrot in the menu bar turns green when a new version is out. Click it, pick
 
 - Clips never leave the machine — no cloud, no sync, no telemetry.
 - **Passwords are not recorded.** A password manager marks what it copies as concealed; CopyPaster drops those clips instead of filing them.
+- **Clips expire.** A week by default — change it in Settings, or turn expiry off if you would rather keep them.
 - The history is stored unencrypted, but the files are readable only by your user account — not by anything else running on the machine.
 
 ## Under the hood

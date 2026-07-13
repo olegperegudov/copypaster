@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Settings</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="sheet">
+    <div class="zone">
+      <h2>Keep the history for</h2>
+      <p class="hint">Clips older than this are deleted. Fifty cards is the most the list holds either way.</p>
+      <div class="choices" id="retention"></div>
+    </div>
+
+    <div class="zone">
+      <h2>Screenshots</h2>
+      <label class="switch-row">
+        <input type="checkbox" id="instant" />
+        <span class="switch-text">
+          Straight to the clipboard
+          <small>No floating thumbnail — the capture is copyable at once, not five seconds later.</small>
+        </span>
+      </label>
+    </div>
+
+    <p class="hint" id="status"></p>
+
+    <script type="module" src="settings.js"></script>
+  </body>
+</html>

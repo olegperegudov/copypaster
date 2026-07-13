@@ -12,15 +12,17 @@ mod history;
 mod mac_window;
 mod paste;
 mod private;
+mod settings;
 #[cfg(target_os = "macos")]
 mod screenshot;
 mod source_app;
 mod store;
 
 use history::History;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tauri::{
-    menu::{CheckMenuItem, MenuBuilder, MenuItem},
+    menu::{MenuBuilder, MenuItem},
     tray::TrayIconBuilder,
     AppHandle, Emitter, Manager,
 };
@@ -47,6 +49,77 @@ fn get_history(state: tauri::State<AppState>) -> Vec<history::ClipView> {
     match state.history.lock() {
         Ok(h) => h.view(),
         Err(_) => Vec::new(),
+    }
+}
+
+/// The user's choices, plus the folder they are written to. Built in `setup`,
+/// where Tauri hands us the OS-resolved data dir — the path is never spelled out
+/// in the code.
+struct SettingsState {
+    /// Cached: the clipboard watcher consults the retention on every clip and
+    /// must not read the disk three times a second.
+    current: Arc<Mutex<settings::Settings>>,
+    dir: PathBuf,
+}
+
+/// What the settings window shows: the chosen retention and the options for it.
+#[tauri::command]
+fn get_settings(cfg: tauri::State<SettingsState>) -> serde_json::Value {
+    let retention = cfg
+        .current
+        .lock()
+        .map(|s| s.retention_days)
+        .unwrap_or(settings::DEFAULT_RETENTION_DAYS);
+    serde_json::json!({
+        "retention_days": retention,
+        "retention_choices": settings::RETENTION_CHOICES,
+        "instant_screenshots": instant_state(),
+    })
+}
+
+/// Change how long clips live. Shortening it takes effect at once — a user who
+/// just cut the window from a month to a day expects yesterday's clips gone now,
+/// not whenever the next clip happens to arrive.
+#[tauri::command]
+fn set_retention_days(
+    app: AppHandle,
+    state: tauri::State<AppState>,
+    cfg: tauri::State<SettingsState>,
+    store: tauri::State<Arc<store::Store>>,
+    days: u32,
+) -> Result<(), String> {
+    if !settings::RETENTION_CHOICES.contains(&days) {
+        return Err(format!("not one of the offered choices: {}", days));
+    }
+    let chosen = settings::Settings { retention_days: days };
+    settings::save(&cfg.dir, &chosen)?;
+    if let Ok(mut s) = cfg.current.lock() {
+        *s = chosen;
+    }
+    let dropped = match state.history.lock() {
+        Ok(mut h) => h.prune_expired(history::now_secs(), chosen.max_age_secs()),
+        Err(e) => return Err(e.to_string()),
+    };
+    if dropped > 0 {
+        persist(&store, &state.history);
+        let _ = app.emit("history-changed", ());
+    }
+    debug_log::log(&format!("settings: retention {} days, {} clips dropped", days, dropped));
+    Ok(())
+}
+
+/// The macOS pref that decides whether a screenshot reaches the clipboard at
+/// once or five seconds later, behind the floating thumbnail.
+#[tauri::command]
+fn set_instant_screenshots(on: bool) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        screenshot::set_instant(on)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = on;
+        Ok(())
     }
 }
 
@@ -212,8 +285,8 @@ fn toggle_popup(app: &AppHandle) {
     mac_window::show_popup(app);
 }
 
-fn show_shortcuts(app: &AppHandle) {
-    if let Some(w) = app.get_webview_window("shortcuts") {
+fn show_window(app: &AppHandle, label: &str) {
+    if let Some(w) = app.get_webview_window(label) {
         let _ = w.show();
         let _ = w.set_focus();
     }
@@ -243,6 +316,9 @@ pub fn run() {
             js_log,
             set_zone,
             get_instant_screenshots,
+            get_settings,
+            set_retention_days,
+            set_instant_screenshots,
             check_for_update,
             install_update
         ])
@@ -252,12 +328,21 @@ pub fn run() {
             // The history outlives the process. An update *is* a restart, and
             // losing the clipboard because a new version arrived is not something
             // a user should have to accept.
-            let store = Arc::new(store::Store::new(
-                app.path().app_data_dir().map_err(|e| format!("no app data dir: {}", e))?,
-            ));
+            let data_dir = app.path().app_data_dir().map_err(|e| format!("no app data dir: {}", e))?;
+            let store = Arc::new(store::Store::new(data_dir.clone()));
+            let current = Arc::new(Mutex::new(settings::load(&data_dir)));
+            let max_age = current.lock().ok().and_then(|s| s.max_age_secs());
             if let Ok(mut h) = history.lock() {
                 h.restore(store.load());
+                // Time passed while the app was not running: whatever expired in
+                // the meantime must not come back on screen.
+                let dropped = h.prune_expired(history::now_secs(), max_age);
+                if dropped > 0 {
+                    store.save(h.items());
+                    debug_log::log(&format!("history: {} expired clips dropped at startup", dropped));
+                }
             }
+            app.manage(SettingsState { current: Arc::clone(&current), dir: data_dir });
             // delete_clip writes the index out on the spot, so the store has to be
             // reachable from a command, not just from the watcher threads.
             app.manage(Arc::clone(&store));
@@ -292,9 +377,16 @@ pub fn run() {
             let watcher_handle = handle.clone();
             let watcher_history = Arc::clone(&history);
             let watcher_store = Arc::clone(&store);
+            let watcher_settings = Arc::clone(&current);
             let w = clipboard::Watcher::new(Arc::clone(&history), Arc::clone(&skip_next));
             std::thread::spawn(move || {
                 w.run(|| {
+                    // A new clip is also the moment to sweep the expired ones: the
+                    // app sits open for days, so startup alone is not enough.
+                    let max_age = watcher_settings.lock().ok().and_then(|s| s.max_age_secs());
+                    if let Ok(mut h) = watcher_history.lock() {
+                        h.prune_expired(history::now_secs(), max_age);
+                    }
                     persist(&watcher_store, &watcher_history);
                     let _ = watcher_handle.emit("history-changed", ());
                 });
@@ -368,18 +460,8 @@ pub fn run() {
 /// the version, then quit.
 fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let update = MenuItem::with_id(app, "update", "Check for updates", true, None::<&str>)?;
+    let settings_item = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
     let shortcuts = MenuItem::with_id(app, "shortcuts", "Shortcuts", true, None::<&str>)?;
-    // Named after what the user gets, not after the macOS pref it flips: ticking
-    // it turns off the floating thumbnail, and the capture reaches the clipboard
-    // at once instead of five seconds later.
-    let instant = CheckMenuItem::with_id(
-        app,
-        "instant",
-        "Screenshot straight to clipboard (no thumbnail)",
-        true,
-        instant_state(),
-        None::<&str>,
-    )?;
     let version = MenuItem::with_id(
         app,
         "version",
@@ -392,8 +474,8 @@ fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let menu = MenuBuilder::new(app)
         .item(&update)
         .separator()
+        .item(&settings_item)
         .item(&shortcuts)
-        .item(&instant)
         .separator()
         .item(&version)
         .item(&quit)
@@ -413,8 +495,8 @@ fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
                     on_update_clicked(app).await;
                 });
             }
-            "shortcuts" => show_shortcuts(app),
-            "instant" => toggle_instant(app),
+            "settings" => show_window(app, "settings"),
+            "shortcuts" => show_window(app, "shortcuts"),
             "quit" => app.exit(0),
             _ => {}
         });
@@ -448,16 +530,6 @@ fn instant_state() -> bool {
     #[cfg(not(target_os = "macos"))]
     {
         false
-    }
-}
-
-fn toggle_instant(_app: &AppHandle) {
-    #[cfg(target_os = "macos")]
-    {
-        let now = screenshot::instant_enabled();
-        if let Err(e) = screenshot::set_instant(!now) {
-            debug_log::log(&format!("screenshot: toggle failed: {}", e));
-        }
     }
 }
 

@@ -26,10 +26,21 @@
       },
       {
         "label": "shortcuts",
-        "title": "\u0413\u043e\u0440\u044f\u0447\u0438\u0435 \u043a\u043b\u0430\u0432\u0438\u0448\u0438",
+        "title": "Shortcuts",
         "url": "shortcuts.html",
         "width": 420,
         "height": 590,
+        "resizable": false,
+        "center": true,
+        "visible": false,
+        "skipTaskbar": true
+      },
+      {
+        "label": "settings",
+        "title": "Settings",
+        "url": "settings.html",
+        "width": 420,
+        "height": 300,
         "resizable": false,
         "center": true,
         "visible": false,

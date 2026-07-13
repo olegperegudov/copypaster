@@ -110,6 +110,20 @@ impl History {
         self.items.len() != before
     }
 
+    /// Drops clips older than the retention the user chose. `None` = they chose
+    /// no expiry. Returns how many went, so the caller knows whether the index on
+    /// disk needs rewriting.
+    ///
+    /// The ring (50 cards) bounds *size*; this bounds *time*. Without it a clip
+    /// nobody pushed out lives forever — and "everything I ever copied" is not
+    /// what a person thinks they are keeping when they keep a clipboard history.
+    pub fn prune_expired(&mut self, now: u64, max_age_secs: Option<u64>) -> usize {
+        let Some(max_age) = max_age_secs else { return 0 };
+        let before = self.items.len();
+        self.items.retain(|i| now.saturating_sub(i.created_at) < max_age);
+        before - self.items.len()
+    }
+
     pub fn items(&self) -> &[ClipItem] {
         &self.items
     }
@@ -194,6 +208,38 @@ mod tests {
 
     fn app() -> SourceApp {
         SourceApp { name: "Ghostty".into(), bundle: "com.mitchellh.ghostty".into(), icon: String::new() }
+    }
+
+    const DAY: u64 = 86_400;
+
+    #[test]
+    fn a_clip_older_than_the_retention_is_dropped() {
+        let mut h = History::new();
+        let now = 100 * DAY;
+        h.add(Payload::Text("last month".into()), app(), now - 30 * DAY);
+        h.add(Payload::Text("yesterday".into()), app(), now - DAY);
+
+        let gone = h.prune_expired(now, Some(7 * DAY));
+        assert_eq!(gone, 1);
+        let left: Vec<String> = h.view().into_iter().map(|c| c.text).collect();
+        assert_eq!(left, ["yesterday"], "the week-old cutoff kept the wrong clip");
+    }
+
+    #[test]
+    fn no_expiry_keeps_everything() {
+        let mut h = History::new();
+        let now = 100 * DAY;
+        h.add(Payload::Text("ancient".into()), app(), 0);
+        assert_eq!(h.prune_expired(now, None), 0);
+        assert_eq!(h.view().len(), 1);
+    }
+
+    #[test]
+    fn a_clip_from_the_future_is_not_treated_as_ancient() {
+        // A clock that moved back (timezone, NTP) must not wipe the history.
+        let mut h = History::new();
+        h.add(Payload::Text("fresh".into()), app(), 100 * DAY);
+        assert_eq!(h.prune_expired(99 * DAY, Some(DAY)), 0);
     }
 
     #[test]

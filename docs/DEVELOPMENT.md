@@ -54,5 +54,5 @@ Remove the probes in the same change that fixes the bug.
 
 | | |
 |---|---|
-| History, images | `~/Library/Application Support/copypaster/` — `index.json` plus `img/<id>.png` |
+| History, images, settings | the OS app-data dir (`app_data_dir()`) — `index.json`, `img/<id>.png`, `settings.json` |
 | Session log | `~/Library/Application Support/copypaster/debug.log` |

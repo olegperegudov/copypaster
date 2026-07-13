@@ -5,6 +5,12 @@ enough to understand *what* changed and *why* without digging through diffs.
 
 ## Unreleased
 
+**A settings window, and clips that expire.** The history had no notion of time: a clip lived until fifty newer ones pushed it out, which for something copied rarely is months. Now it has a retention window — a day, a week (the default), a month, or no limit — and anything past it is deleted: at startup (time passed while the app was closed), on every new clip (the app sits open for days), and immediately when the window is shortened, so cutting a month to a day does not leave yesterday's clips on screen. `MAX_ITEMS` still bounds size; retention bounds time, and they are different questions.
+
+The tray menu gained **Settings** (a real window, same zones as the cheat sheet) and lost the loose "Screenshot straight to clipboard" tick — that switch moved inside. The cheat-sheet window's title was in Russian; the app speaks English.
+
+`settings.json` sits next to the history, written owner-only like everything else. The retention value is checked against the offered choices in Rust — it decides what gets deleted, so it is not free text. The new window is listed in `capabilities/default.json`; without that it renders and stays mute.
+
 **Content-Security-Policy is set** (`default-src 'self'`; no remote script, image or connection) and **every GitHub action is pinned to a commit SHA**, with the updater signing key reaching only the step that signs. The popup renders clipboard content and app icons, so an escaping bug there would have had a network to escape to; now it does not. The build jobs hold the key that signs auto-updates — a moved tag upstream would have been a signed malicious update for every user. Same change in Ribbit and Quill.
 
 **Passwords no longer land in the history, and the history is no longer world-readable.** Two bugs, one consequence: anything running as any user on the machine could read every clip ever copied, passwords included.
