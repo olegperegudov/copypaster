@@ -101,6 +101,15 @@ impl History {
         self.items.truncate(MAX_ITEMS);
     }
 
+    /// Drops one clip for good. Returns false when the id is already gone: the
+    /// card the user pressed on can be a beat behind the history, and a stale
+    /// press must not take a neighbour with it.
+    pub fn remove(&mut self, id: u64) -> bool {
+        let before = self.items.len();
+        self.items.retain(|i| i.id != id);
+        self.items.len() != before
+    }
+
     pub fn items(&self) -> &[ClipItem] {
         &self.items
     }
@@ -185,6 +194,31 @@ mod tests {
 
     fn app() -> SourceApp {
         SourceApp { name: "Ghostty".into(), bundle: "com.mitchellh.ghostty".into(), icon: String::new() }
+    }
+
+    #[test]
+    fn a_deleted_clip_leaves_the_history() {
+        let mut h = History::new();
+        h.add(Payload::Text("keep".into()), app(), 1);
+        h.add(Payload::Text("drop".into()), app(), 2);
+        let doomed = h.view()[0].id;
+
+        assert!(h.remove(doomed));
+        let left = h.view();
+        assert_eq!(left.len(), 1);
+        assert_eq!(left[0].text, "keep");
+    }
+
+    #[test]
+    fn deleting_a_clip_that_is_already_gone_takes_no_neighbour() {
+        let mut h = History::new();
+        h.add(Payload::Text("keep".into()), app(), 1);
+        let id = h.view()[0].id;
+        h.remove(id);
+
+        // A stale card in the popup can press on an id the history no longer has.
+        assert!(!h.remove(id));
+        assert!(h.view().is_empty());
     }
 
     #[test]

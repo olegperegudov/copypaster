@@ -273,6 +273,21 @@ mod tests {
     }
 
     #[test]
+    fn deleting_an_image_clip_takes_its_file_with_it() {
+        let store = temp_store();
+        let mut h = History::new();
+        h.add(Payload::Image { png: png(), width: 1, height: 1 }, app(), 1);
+        store.save(h.items());
+        let file = store.img_path(h.view()[0].id);
+        assert!(file.exists());
+
+        let id = h.view()[0].id;
+        assert!(h.remove(id));
+        store.save(h.items());
+        assert!(!file.exists(), "the image file outlived the card the user deleted");
+    }
+
+    #[test]
     fn a_corrupt_index_starts_empty_instead_of_crashing() {
         let store = temp_store();
         std::fs::write(store.index_path(), b"{not json").unwrap();

@@ -64,6 +64,25 @@ fn pick(app: AppHandle, state: tauri::State<AppState>, id: u64) -> Result<(), St
     paste::paste(&payload, &state.skip_next, target)
 }
 
+/// Backspace on a card. The clip leaves the history and, if it was an image, its
+/// file leaves the disk — `store::save` sweeps whatever no longer has a clip.
+#[tauri::command]
+fn delete_clip(
+    app: AppHandle,
+    state: tauri::State<AppState>,
+    store: tauri::State<Arc<store::Store>>,
+    id: u64,
+) -> Result<(), String> {
+    {
+        let mut h = state.history.lock().map_err(|e| e.to_string())?;
+        if !h.remove(id) {
+            return Err(format!("clip {} is gone", id));
+        }
+    }
+    persist(&store, &state.history);
+    app.emit("history-changed", ()).map_err(|e| e.to_string())
+}
+
 /// Esc, or a click past the popup: put it away and hand the keyboard back to the
 /// app the user came from, exactly as a paste would have done.
 #[tauri::command]
@@ -217,6 +236,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_history,
             pick,
+            delete_clip,
             close_popup,
             get_version,
             js_log,
@@ -237,6 +257,9 @@ pub fn run() {
             if let Ok(mut h) = history.lock() {
                 h.restore(store.load());
             }
+            // delete_clip writes the index out on the spot, so the store has to be
+            // reachable from a command, not just from the watcher threads.
+            app.manage(Arc::clone(&store));
 
             // Menu-bar utility: no Dock icon, no Cmd-Tab entry. Also keeps app
             // activation out of the paste path.

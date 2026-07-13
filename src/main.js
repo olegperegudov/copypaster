@@ -166,6 +166,15 @@ async function pick(id) {
   await invoke("pick", { id });
 }
 
+/** Backspace on a card. The cursor stays where it stood, so holding the key
+ *  walks the history away card by card instead of jumping to the end. */
+async function drop(id) {
+  await invoke("delete_clip", { id });
+  await load();
+  state.cardIdx = clamp(state.cardIdx, cards().length);
+  render();
+}
+
 function setZone(zone) {
   if (state.zone === zone) return;
   state.zone = zone;
@@ -255,11 +264,15 @@ document.addEventListener("keydown", (e) => {
     }
 
     case "Backspace":
-      // In the app row it clears the filter; in the search field it is just
-      // backspace, deleting a character.
+      // One key, one meaning per zone: on the cards it deletes the card, in the
+      // app row it clears the filter, in the search field it deletes a character.
       if (state.zone === "apps") {
         e.preventDefault();
         clearAppFilter();
+      } else if (state.zone === "cards") {
+        e.preventDefault();
+        const clip = cards()[state.cardIdx];
+        if (clip) drop(clip.id);
       }
       return;
 

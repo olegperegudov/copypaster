@@ -3,6 +3,18 @@
 Engineering release notes. Primary reader: future Claude. Detailed on purpose —
 enough to understand *what* changed and *why* without digging through diffs.
 
+## 0.1.14 — 2026-07-13
+
+**Backspace deletes the card you are standing on.** The key already meant "take this away" in the other two zones — it clears the app filter, and it deletes a character in search. On the cards it did nothing, and a clip you no longer wanted could only be waited out of the ring.
+
+- `delete_clip` drops the item and writes the index straight away, so the clip does not come back after a restart. An image clip takes its file with it: `store::save` already sweeps whatever no longer has a clip behind it.
+- A stale press is harmless: an id the history has already lost returns an error instead of taking the neighbouring card with it.
+- The cursor stays put, so the next card slides under it — holding the key walks the history away one card at a time.
+
+Tests: the clip leaves the history, a second delete of the same id takes no neighbour, the image file leaves the disk. Driven end to end in a browser against the real popup code: pressed `⌫` on the middle card, the card went and the cursor kept its place.
+
+**The icon lost its box.** The tray, Dock and DMG icons are regenerated from a transparent parrot — the way Ribbit carries its frog. The old plate with the "COPY PASTER" caption is gone.
+
 ## 0.1.9 — 2026-07-13
 
 **The history survives a restart.** Was: clips lived in memory only — any restart, an update above all, wiped them. Now: the history sits on disk and comes back at launch.
