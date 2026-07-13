@@ -5,6 +5,11 @@ enough to understand *what* changed and *why* without digging through diffs.
 
 ## Unreleased
 
+**Passwords no longer land in the history, and the history is no longer world-readable.** Two bugs, one consequence: anything running as any user on the machine could read every clip ever copied, passwords included.
+
+- `clipboard.rs` now checks the pasteboard for the markers every password manager stamps on what it copies (`org.nspasteboard.ConcealedType`, plus the transient / auto-generated pair) and drops such a clip before it reaches the history. Windows has its own flag (`ExcludeClipboardContentFromMonitorProcessing`) — same treatment. Verified against a real staged pasteboard clip, both directions: `src-tauri/tests/stage_concealed_clip.swift` + `cargo test --lib -- --ignored concealed`.
+- Everything the app writes (`index.json`, `img/*.png`, `debug.log`, the atomic temp file) now goes through `private.rs`: mode 0600, folders 0700, set on the open handle so a file an older build left at 0644 is narrowed rather than kept. `std::fs::write` obeys the umask, which is 022 by default — that is where the 0644 came from. A test asserts the modes; it fails if anyone reintroduces a plain `fs::write`.
+
 **README feature sections say what you get, not what the control is called.** "The history / Filter by app / Search / Keys" became "Everything you copied, still there / Too many clips? Narrow to the app / Or just start typing / Hands stay on the keyboard" — same screenshots, headings that read like a benefit, matching Ribbit's. The screenshot paragraph lost half its prose.
 
 **`docs/DEVELOPMENT.md` gained the Debugging section** (the `js_log` command; DevTools are off in release builds), which Ribbit's copy already had.

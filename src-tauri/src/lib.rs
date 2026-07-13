@@ -11,6 +11,7 @@ mod debug_log;
 mod history;
 mod mac_window;
 mod paste;
+mod private;
 #[cfg(target_os = "macos")]
 mod screenshot;
 mod source_app;

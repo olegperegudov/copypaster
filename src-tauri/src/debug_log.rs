@@ -4,7 +4,6 @@
 //! or a screenshot never shows up, there is no console to look at. This file is
 //! the only witness, so every clipboard/paste/screenshot decision writes a line.
 
-use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -16,11 +15,12 @@ pub fn init() {
     let dir = dirs::data_dir()
         .unwrap_or_else(std::env::temp_dir)
         .join("copypaster");
-    let _ = std::fs::create_dir_all(&dir);
+    let _ = crate::private::create_dir(&dir);
     let path = dir.join("debug.log");
     // Fresh file per launch — an unbounded log on a tray app that runs for
     // weeks is a slow disk leak, and only the current session is ever useful.
-    let _ = std::fs::write(&path, b"");
+    // Private: the log names the app you copied from and how long the clip was.
+    let _ = crate::private::write(&path, b"");
     if let Ok(mut g) = LOG_PATH.lock() {
         *g = Some(path);
     }
@@ -39,7 +39,7 @@ pub fn log(msg: &str) {
         Err(_) => return,
     };
     if let Some(path) = guard.as_ref() {
-        if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(path) {
+        if let Ok(mut f) = crate::private::append(path) {
             let _ = f.write_all(line.as_bytes());
         }
     }

@@ -67,7 +67,8 @@ The parrot in the menu bar turns green when a new version is out. Click it, pick
 ## Privacy
 
 - Clips never leave the machine — no cloud, no sync, no telemetry.
-- The history sits unencrypted in a folder on your disk, the same as Paste and the rest. A password that passes through the clipboard settles there too.
+- **Passwords are not recorded.** A password manager marks what it copies as concealed; CopyPaster drops those clips instead of filing them.
+- The history is stored unencrypted, but the files are readable only by your user account — not by anything else running on the machine.
 
 ## Under the hood
 

@@ -42,7 +42,7 @@ impl Store {
     /// `dir` is the app's data directory; the history lives in a subfolder of it.
     pub fn new(dir: PathBuf) -> Self {
         let store = Store { dir };
-        if let Err(e) = std::fs::create_dir_all(store.img_dir()) {
+        if let Err(e) = crate::private::create_dir(&store.img_dir()) {
             crate::debug_log::log(&format!("store: cannot create {}: {}", store.img_dir().display(), e));
         }
         store
@@ -112,7 +112,7 @@ impl Store {
             if let Payload::Image { png, .. } = &item.payload {
                 let path = self.img_path(item.id);
                 if !path.exists() {
-                    if let Err(e) = std::fs::write(&path, png) {
+                    if let Err(e) = crate::private::write(&path, png) {
                         crate::debug_log::log(&format!("store: cannot write {}: {}", path.display(), e));
                     }
                 }
@@ -176,9 +176,11 @@ impl Store {
 
 /// A half-written index is worse than a stale one: the app reads it on the next
 /// launch and finds garbage. Write beside it, then rename over — rename is atomic.
+/// The temp file is created private too: it holds the same history, and for the
+/// moment before the rename it is a second copy of it on disk.
 fn write_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     let tmp = path.with_extension("json.tmp");
-    std::fs::write(&tmp, bytes)?;
+    crate::private::write(&tmp, bytes)?;
     std::fs::rename(&tmp, path)
 }
 
@@ -285,6 +287,25 @@ mod tests {
         assert!(h.remove(id));
         store.save(h.items());
         assert!(!file.exists(), "the image file outlived the card the user deleted");
+    }
+
+    /// The history is a transcript of everything the user copied. Left at the
+    /// default umask it lands 0644 and every process on the machine can read it.
+    #[cfg(unix)]
+    #[test]
+    fn nothing_the_store_writes_is_readable_by_anyone_else() {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = |p: &std::path::Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+
+        let store = temp_store();
+        let mut h = History::new();
+        h.add(Payload::Text("hunter2".into()), app(), 1);
+        h.add(Payload::Image { png: png(), width: 1, height: 1 }, app(), 2);
+        store.save(h.items());
+
+        assert_eq!(mode(&store.index_path()), 0o600, "index.json is world-readable");
+        assert_eq!(mode(&store.img_path(h.view()[0].id)), 0o600, "a copied image is world-readable");
+        assert_eq!(mode(&store.img_dir()), 0o700, "the image folder is world-listable");
     }
 
     #[test]
