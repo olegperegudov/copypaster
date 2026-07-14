@@ -40,7 +40,7 @@ A card per clip, newest first. `⏎` or `1`…`9` — and it's back in the windo
 
 ## Too many clips? Narrow to the app
 
-The icon row on top. Step onto an app — only its clips remain.
+The icon row on top. Step onto an app — only its clips remain. Standing on a card, `▲` goes straight to *that card's* app and turns its filter on, so `▲▼` means "more of this, please" and puts you back on the card you came from.
 
 ![The app filter](docs/screenshots/filter.png)
 

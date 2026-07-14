@@ -84,10 +84,11 @@ function renderApps(row) {
     node.append(count);
     node.addEventListener("click", () => {
       state.appIdx = idx;
+      state.leftCardId = cards()[state.cardIdx]?.id ?? state.leftCardId;
       // Clicking the app you are already filtering on lets it go — otherwise the
       // mouse can set a filter it cannot clear.
       state.appFilter = state.appFilter === app.bundle ? null : app.bundle;
-      state.cardIdx = 0;
+      state.cardIdx = keepCursorOn(cards(), state.leftCardId);
       render();
     });
     el.apps.append(node);
@@ -192,16 +193,24 @@ async function drop(id) {
 
 function setZone(zone) {
   if (state.zone === zone) return;
-  state.zone = zone;
+
   if (zone === "apps") {
-    state.leftCardId = cards()[state.cardIdx]?.id ?? null;
-    // Stepping into the row is already a choice: the app under the cursor starts
-    // filtering right away, and the ⌫ chip appears with it. Waiting for a
-    // sideways press would mean standing on an app that is not the one you see
-    // the cards for.
+    // Standing on a card and stepping up is a sentence: "more of *this*". The
+    // cursor lands on that card's own app and its filter is on at once — the flick
+    // up-and-back-down is the whole gesture for "only the terminal, please", with
+    // no walking the row to find the icon that was already under the cards.
+    const card = cards()[state.cardIdx];
+    state.leftCardId = card?.id ?? null;
+    const here = card ? apps().findIndex((a) => a.bundle === card.appBundle) : -1;
+    if (here !== -1) state.appIdx = here;
     state.appFilter = apps()[state.appIdx]?.bundle ?? null;
-    state.cardIdx = 0;
   }
+
+  state.zone = zone;
+  // Either way the cursor comes back down onto the card it left: on the way up the
+  // filter is that card's own app, so the card is still there; on the way back it
+  // is the one the user was reading.
+  state.cardIdx = keepCursorOn(cards(), state.leftCardId);
   invoke("set_zone", { zone }).catch(() => {});
   render();
 }
@@ -252,7 +261,10 @@ function moveCursor(delta) {
     // The filter follows the cursor: one arrow press is the whole gesture, no
     // Enter to confirm.
     state.appFilter = row[state.appIdx]?.bundle ?? null;
-    state.cardIdx = 0;
+    // Walk off the card's own app and the card is filtered away, so the cursor
+    // falls to the head of what is left; walk back onto it and the card is there
+    // again, waiting under the cursor.
+    state.cardIdx = keepCursorOn(cards(), state.leftCardId);
   }
   render();
 }

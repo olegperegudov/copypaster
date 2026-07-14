@@ -313,7 +313,7 @@ const TRAY_WINDOWS: [&str; 2] = ["settings", "shortcuts"];
 fn sheet_base_size(label: &str) -> Option<(f64, f64)> {
     match label {
         "settings" => Some((420.0, 430.0)),
-        "shortcuts" => Some((420.0, 470.0)),
+        "shortcuts" => Some((420.0, 510.0)),
         _ => None,
     }
 }

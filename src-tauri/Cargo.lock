@@ -441,7 +441,7 @@ dependencies = [
 
 [[package]]
 name = "copypaster"
-version = "0.1.22"
+version = "0.1.26"
 dependencies = [
  "arboard",
  "base64 0.22.1",
