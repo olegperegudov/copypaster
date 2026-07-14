@@ -38,9 +38,12 @@ export function keyAction(press, state) {
     case "Enter":
       return { type: "paste" };
     case "Backspace":
-      // One key, read in the order the user thinks: it takes back the last thing
-      // they did. Something typed — erase a letter of it; nothing typed but a
-      // filter is on — let the filter go.
+      // ⌫ takes back the last thing done *here*. Standing on the icons, that is
+      // the filter they put on — never a letter of a query written elsewhere,
+      // which is not even on screen next to the cursor. On the cards there is
+      // nothing else it could mean: erase what was typed, and once there is
+      // nothing left to erase, let the filter go.
+      if (zone === "apps") return hasFilter ? { type: "clearFilter" } : null;
       if (query) return { type: "erase" };
       if (hasFilter) return { type: "clearFilter" };
       return null;

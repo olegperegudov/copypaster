@@ -28,6 +28,11 @@ const state = {
   zone: "cards",
   cardIdx: 0,
   appIdx: 0,
+  /** id of the card the cursor stood on before stepping up to the icons. Stepping
+   *  up filters the cards under it away, so that card is not on screen to be
+   *  remembered by position — but it is the one to come back to when the filter
+   *  is let go. */
+  leftCardId: null,
 };
 
 const el = {
@@ -189,6 +194,7 @@ function setZone(zone) {
   if (state.zone === zone) return;
   state.zone = zone;
   if (zone === "apps") {
+    state.leftCardId = cards()[state.cardIdx]?.id ?? null;
     // Stepping into the row is already a choice: the app under the cursor starts
     // filtering right away, and the ⌫ chip appears with it. Waiting for a
     // sideways press would mean standing on an app that is not the one you see
@@ -207,11 +213,14 @@ function stepZone(delta) {
   setZone(ZONES[next]);
 }
 
-/** ⌫ with nothing typed, or a click on the chip: the filter goes, the cursor
- *  stays where it is. */
+/** ⌫ on the icons, ⌫ on the cards with nothing left to erase, or a click on the
+ *  chip. Dropping a filter only brings cards back, so the card to come back to is
+ *  always there: on the icons it is the one left behind on the way up, on the
+ *  cards the one under the cursor. */
 function clearAppFilter() {
+  const held = state.zone === "apps" ? state.leftCardId : cards()[state.cardIdx]?.id ?? null;
   state.appFilter = null;
-  state.cardIdx = 0;
+  state.cardIdx = keepCursorOn(cards(), held);
   render();
 }
 
@@ -315,6 +324,7 @@ listen("popup-opened", async () => {
   state.zone = "cards";
   state.cardIdx = 0;
   state.appIdx = 0;
+  state.leftCardId = null;
   invoke("set_zone", { zone: "cards" }).catch(() => {});
   await load();
 });

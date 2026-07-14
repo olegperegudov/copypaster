@@ -49,6 +49,16 @@ describe("backspace erases, delete deletes", () => {
     expect(keyAction(press("Backspace"), at({ hasFilter: true }))).toEqual({ type: "clearFilter" });
   });
 
+  it("on the icons it lets the filter go, even with a query typed", () => {
+    expect(keyAction(press("Backspace"), at({ zone: "apps", query: "ass", hasFilter: true }))).toEqual({
+      type: "clearFilter",
+    });
+  });
+
+  it("does nothing on the icons with no filter to let go", () => {
+    expect(keyAction(press("Backspace"), at({ zone: "apps", query: "ass" }))).toBeNull();
+  });
+
   it("does nothing with no query and no filter — it must never reach a card", () => {
     expect(keyAction(press("Backspace"), at())).toBeNull();
   });
