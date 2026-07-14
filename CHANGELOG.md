@@ -5,6 +5,20 @@ enough to understand *what* changed and *why* without digging through diffs.
 
 ## Unreleased
 
+**The same clip twice is one card.** Copying a snippet you already have used to file a second, identical card — and ten copies of a path you paste all day would push everything else off the fifty-card ring. Now the history recognises content it holds: the clip that is there moves back to the head, takes the new time, and takes the app it was copied from this time (an app we could not identify does not overwrite the one we knew, so the card never loses its header). The duplicate check was already there, but only against the *head* — it caught "copied twice in a row" and nothing else.
+
+- Each clip carries a hash of its payload (`content_hash`, kind hashed with the bytes so text and an image can never look alike). The hash narrows the search; a byte compare settles it, because a collision would otherwise hand the user someone else's clip. Comparing payloads directly would mean memcmp-ing a few hundred KB of PNG against fifty clips on every clipboard change.
+- The moved clip keeps its id — its image file on disk is keyed by id, and rebuilding the clip would orphan the picture.
+- `add` returns whether anything changed, so re-seeing the same clip at the same second (the watcher can) costs neither a disk write nor a redraw.
+- Histories written by earlier versions already carry duplicates. `restore` collapses them on load, newest copy kept, and the cleaned list is written straight back — otherwise the index would carry them forever and every launch would collapse them again.
+
+**The search is no longer a place you go.** It was a zone between the cards and the icons: to search you walked up into it, typed, then walked back down to the cards to choose one. The keys now say what the popup is: the cursor lives on the cards and the icons and nothing else, and whatever you type goes into the search from wherever you stand. ⌥V → "assist" → ◀▶ → ⏎, in one gesture.
+
+- The query surfaces *above* the icon row and only once there is something in it, so nothing below it moves when it appears. It is a `<span>`, not an `<input>`: nothing focusable, no click target, no arrow can walk into it. The caret is drawn.
+- ⌫ now erases a letter of the query, then (with nothing left to erase) clears the app filter. Deleting a card moved to ⌦ — the destructive key is no longer the one you reach for to fix a typo. It only fires on the cards, where the selection is visible.
+- Digits 1–9 paste the n-th card while the search is empty and are characters once there is a query — a key that pastes card two cannot also be how you search for "v2". Same rule as before, keyed on the query instead of the (now absent) search zone.
+- The keymap moved into `keys.js` as one pure function: the rules are read and tested without a DOM, `main.js` only carries them out. The cheat sheet lost its search zone and the settings window's cheat-sheet twin shrank to 470 to fit.
+
 **The whole interface can be sized up.** The px sizes are authored for a screen you are leaning into; the popup is read at a glance from across the desk, where they run a shade tight. A new **Interface size** slider in Settings scales everything — the popup and both sheets — through a page `zoom`, so the fixed card widths and paddings grow in step with the text instead of the text spilling out of them. The default is 110%, a touch above the authored size; the range is 85–125%.
 
 - The factor lives in `settings.json` as `ui_scale` (`settings.rs`), clamped to the slider's ends on the way in — it drives a window resize, so a value from disk or the frontend is not trusted to be sane. An old settings file without the field reads as the default. Writing the retention no longer constructs a fresh `Settings` (that would have wiped the scale); both setters now edit the cached copy and save the whole thing.

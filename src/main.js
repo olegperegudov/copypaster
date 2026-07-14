@@ -1,17 +1,24 @@
-// Popup behaviour: three zones, two axes.
+// Popup behaviour: two zones, two axes.
 //
-// Up/down moves between zones (cards → search → apps, bottom-up); left/right
-// moves inside the zone that holds the cursor. Each zone remembers where the
-// cursor was, so stepping away and back does not lose your place.
+// Up/down moves between the cards and the app icons above them; left/right moves
+// inside whichever of the two holds the cursor. Each remembers where the cursor
+// was, so stepping away and back does not lose your place.
+//
+// The search is deliberately not a third zone. Typing filters from wherever you
+// are standing and the query surfaces above the icons, so the fast path is one
+// gesture: ⌥V, type "assist", arrow to the card, Enter — with no trip up into a
+// field and back down again.
 
 import { clamp, wrap } from "./nav.js";
+import { keyAction } from "./keys.js";
 import { age, appRow, highlightMatches, visibleClips } from "./search.js";
 import { applyScaleFromSettings } from "./scale.js";
 
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
-const ZONES = ["apps", "search", "cards"];
+/** Top to bottom on screen, which is what up and down have to agree with. */
+const ZONES = ["apps", "cards"];
 
 const state = {
   clips: [],
@@ -54,7 +61,6 @@ function render() {
   renderCards(list);
 
   el.empty.hidden = state.clips.length > 0;
-  el.search.classList.toggle("focus", state.zone === "search");
   el.apps.classList.toggle("focus", state.zone === "apps");
 }
 
@@ -100,11 +106,14 @@ function appIcon(app) {
 }
 
 function renderSearch(visible) {
+  // No query, no bar: an empty search box is a thing to look at and reason about,
+  // and there is nothing to reason about until the user has typed something.
+  el.search.hidden = state.query === "";
+  el.query.textContent = state.query;
   el.count.textContent =
     state.query.trim() && state.clips.length
       ? `${visible} of ${state.clips.length}`
       : "";
-  if (el.query.value !== state.query) el.query.value = state.query;
 }
 
 function renderCards(list) {
@@ -167,8 +176,8 @@ async function pick(id) {
   await invoke("pick", { id });
 }
 
-/** Backspace on a card. The cursor stays where it stood, so holding the key
- *  walks the history away card by card instead of jumping to the end. */
+/** ⌦ on a card. The cursor stays where it stood, so holding the key walks the
+ *  history away card by card instead of jumping to the end. */
 async function drop(id) {
   await invoke("delete_clip", { id });
   await load();
@@ -187,11 +196,6 @@ function setZone(zone) {
     state.appFilter = apps()[state.appIdx]?.bundle ?? null;
     state.cardIdx = 0;
   }
-  if (zone === "search") {
-    el.query.focus();
-  } else {
-    el.query.blur();
-  }
   invoke("set_zone", { zone }).catch(() => {});
   render();
 }
@@ -203,11 +207,23 @@ function stepZone(delta) {
   setZone(ZONES[next]);
 }
 
-/** Backspace in the app row: drop the filter and fall through to the search. */
+/** ⌫ with nothing typed, or a click on the chip: the filter goes, the cursor
+ *  stays where it is. */
 function clearAppFilter() {
   state.appFilter = null;
   state.cardIdx = 0;
-  setZone("search");
+  render();
+}
+
+/** Every route into the query runs through here — a filter on an app that the
+ *  new query has emptied out of the row is one the user can no longer see or
+ *  reach, so it goes rather than silently hiding cards. */
+function setQuery(query) {
+  state.query = query;
+  if (state.appFilter && !apps().some((a) => a.bundle === state.appFilter)) {
+    state.appFilter = null;
+  }
+  state.cardIdx = 0;
   render();
 }
 
@@ -230,85 +246,46 @@ function moveCursor(delta) {
 // ---------- keyboard ----------
 
 document.addEventListener("keydown", (e) => {
-  const inSearch = state.zone === "search";
+  const action = keyAction(
+    { key: e.key, meta: e.metaKey, ctrl: e.ctrlKey, alt: e.altKey },
+    { zone: state.zone, query: state.query, hasFilter: !!state.appFilter }
+  );
+  if (!action) return;
+  e.preventDefault();
 
-  switch (e.key) {
-    case "Escape":
-      e.preventDefault();
+  switch (action.type) {
+    case "close":
       invoke("close_popup");
       return;
-
-    case "ArrowUp":
-      e.preventDefault();
-      stepZone(-1);
+    case "zone":
+      stepZone(action.delta);
       return;
-
-    case "ArrowDown":
-      e.preventDefault();
-      stepZone(1);
+    case "move":
+      moveCursor(action.delta);
       return;
-
-    case "ArrowLeft":
-    case "ArrowRight":
-      // In the search field the arrows belong to the caret, as in any text box.
-      if (inSearch) return;
-      e.preventDefault();
-      moveCursor(e.key === "ArrowLeft" ? -1 : 1);
-      return;
-
-    case "Enter": {
-      e.preventDefault();
-      const list = cards();
-      const clip = list[state.cardIdx];
+    case "paste": {
+      // With an index it is a digit shortcut, without one it is the selected card.
+      const clip = cards()[action.index ?? state.cardIdx];
       if (clip) pick(clip.id);
       return;
     }
-
-    case "Backspace":
-      // One key, one meaning per zone: on the cards it deletes the card, in the
-      // app row it clears the filter, in the search field it deletes a character.
-      if (state.zone === "apps") {
-        e.preventDefault();
-        clearAppFilter();
-      } else if (state.zone === "cards") {
-        e.preventDefault();
-        const clip = cards()[state.cardIdx];
-        if (clip) drop(clip.id);
-      }
+    case "deleteCard": {
+      const clip = cards()[state.cardIdx];
+      if (clip) drop(clip.id);
       return;
-
-    default:
-      break;
-  }
-
-  // Digits pick the n-th card — but only where they are not text. Typing "1"
-  // into the search field must produce a "1".
-  if (!inSearch && /^[1-9]$/.test(e.key)) {
-    e.preventDefault();
-    const clip = cards()[Number(e.key) - 1];
-    if (clip) pick(clip.id);
-    return;
-  }
-
-  // Any printable character starts a search from wherever you are — the fastest
-  // path to a clip you can name.
-  if (!inSearch && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
-    setZone("search");
+    }
+    case "type":
+      setQuery(state.query + action.char);
+      return;
+    case "erase":
+      setQuery(state.query.slice(0, -1));
+      return;
+    case "clearFilter":
+      clearAppFilter();
+      return;
   }
 });
 
-el.query.addEventListener("input", () => {
-  state.query = el.query.value;
-  // A query that empties the current app out of the row leaves a filter the
-  // user can no longer see or reach — drop it rather than silently hiding cards.
-  if (state.appFilter && !apps().some((a) => a.bundle === state.appFilter)) {
-    state.appFilter = null;
-  }
-  state.cardIdx = 0;
-  render();
-});
-
-el.search.addEventListener("click", () => setZone("search"));
 el.clear.addEventListener("click", clearAppFilter);
 
 // The popup window is a full-width strip, mostly bare: what the user sees through
@@ -333,8 +310,6 @@ listen("popup-opened", async () => {
   state.zone = "cards";
   state.cardIdx = 0;
   state.appIdx = 0;
-  el.query.value = "";
-  el.query.blur();
   invoke("set_zone", { zone: "cards" }).catch(() => {});
   await load();
 });

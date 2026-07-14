@@ -6,31 +6,31 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="popup">
-    <!-- Three floating zones, no shared backdrop: what is behind them is the
-         user's own screen. Order is bottom-up in use (cards → search → apps),
-         so the markup runs apps → search → cards. -->
+    <!-- No shared backdrop: what is behind these is the user's own screen. The
+         two places the cursor can stand are the cards and the icons above them;
+         the search is not one of them. It is a readout of what you are typing,
+         which is why it is a span and not an input — the mouse cannot land in it
+         and the arrows cannot walk into it. It only appears once there is a query,
+         and it appears above the icons so nothing below it moves when it does. -->
     <div class="float">
+      <div class="glass search" id="search" hidden>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5 L14 14" stroke-linecap="round" />
+        </svg>
+        <span class="typed">
+          <span class="query" id="query"></span>
+          <i class="caret" aria-hidden="true"></i>
+        </span>
+        <span class="count" id="count"></span>
+      </div>
+
       <!-- The ⌫ chip is a tab on top of the app row, not the first thing in it:
            as the head of the row it shoved every icon sideways the moment a
            filter went on. -->
       <div class="apps-zone">
         <span class="apps-clear" id="apps-clear" hidden><kbd>⌫</kbd>clear</span>
         <div class="glass apps" id="apps"></div>
-      </div>
-
-      <div class="glass search" id="search">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-          <circle cx="7" cy="7" r="4.5" />
-          <path d="M10.5 10.5 L14 14" stroke-linecap="round" />
-        </svg>
-        <input
-          id="query"
-          type="text"
-          placeholder="Search history…"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <span class="count" id="count"></span>
       </div>
     </div>
 

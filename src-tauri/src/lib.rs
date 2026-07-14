@@ -156,8 +156,8 @@ fn pick(app: AppHandle, state: tauri::State<AppState>, id: u64) -> Result<(), St
     paste::paste(&payload, &state.skip_next, target)
 }
 
-/// Backspace on a card. The clip leaves the history and, if it was an image, its
-/// file leaves the disk — `store::save` sweeps whatever no longer has a clip.
+/// ⌦ on a card. The clip leaves the history and, if it was an image, its file
+/// leaves the disk — `store::save` sweeps whatever no longer has a clip.
 #[tauri::command]
 fn delete_clip(
     app: AppHandle,
@@ -195,9 +195,9 @@ fn js_log(message: String) {
     debug_log::log(&format!("[ui] {}", message));
 }
 
-/// The zone the user is standing in — the Shortcuts window shows the keys that
-/// are live right there, because the same key does different things per zone
-/// (digits pick a card, or type a digit into the search field).
+/// The zone the user is standing in — the cards or the app icons. The Shortcuts
+/// window lights up the one that is live, because the arrows and ⌫ mean different
+/// things in each.
 #[tauri::command]
 fn set_zone(app: AppHandle, zone: String) {
     let _ = app.emit("zone-changed", zone);
@@ -313,7 +313,7 @@ const TRAY_WINDOWS: [&str; 2] = ["settings", "shortcuts"];
 fn sheet_base_size(label: &str) -> Option<(f64, f64)> {
     match label {
         "settings" => Some((420.0, 430.0)),
-        "shortcuts" => Some((420.0, 590.0)),
+        "shortcuts" => Some((420.0, 470.0)),
         _ => None,
     }
 }
@@ -379,13 +379,19 @@ pub fn run() {
             let current = Arc::new(Mutex::new(settings::load(&data_dir)));
             let max_age = current.lock().ok().and_then(|s| s.max_age_secs());
             if let Ok(mut h) = history.lock() {
-                h.restore(store.load());
+                // Both of these shrink the history, and what shrank has to reach
+                // the disk: a duplicate the index still carries is one the next
+                // launch would have to collapse all over again.
+                let collapsed = h.restore(store.load());
                 // Time passed while the app was not running: whatever expired in
                 // the meantime must not come back on screen.
                 let dropped = h.prune_expired(history::now_secs(), max_age);
-                if dropped > 0 {
+                if collapsed + dropped > 0 {
                     store.save(h.items());
-                    debug_log::log(&format!("history: {} expired clips dropped at startup", dropped));
+                    debug_log::log(&format!(
+                        "history: {} duplicates collapsed, {} expired clips dropped at startup",
+                        collapsed, dropped
+                    ));
                 }
             }
             app.manage(SettingsState { current: Arc::clone(&current), dir: data_dir });

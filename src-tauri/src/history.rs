@@ -30,6 +30,17 @@ pub struct ClipItem {
     pub app: SourceApp,
     /// Unix epoch, seconds. The UI turns this into "4 min".
     pub created_at: u64,
+    /// Hash of the payload, kept so a re-copy can be recognised without comparing
+    /// its bytes against fifty clips — an image payload is hundreds of kilobytes.
+    /// Not persisted: it is derived from the payload and recomputed on load.
+    hash: u64,
+}
+
+impl ClipItem {
+    pub fn new(id: u64, payload: Payload, app: SourceApp, created_at: u64) -> Self {
+        let hash = content_hash(&payload);
+        ClipItem { id, payload, app, created_at, hash }
+    }
 }
 
 /// The app the clip was copied from — the card's header, and what the app row
@@ -76,18 +87,39 @@ impl History {
         History { items: Vec::new(), next_id: 1 }
     }
 
-    /// Adds a clip at the head. Returns false when it was a duplicate of the
-    /// current head — the same content copied twice in a row is one clip, not
-    /// two, and re-copying the clip we just pasted must not grow the history.
+    /// Files a clip. Content the history already holds is not a second card: the
+    /// clip we have moves to the head and takes the new time and source app —
+    /// copying the same snippet ten times a day should leave one card that says
+    /// "just now", not ten identical ones pushing everything else off the ring.
+    ///
+    /// Returns whether anything actually changed, so an unchanged history costs
+    /// neither a disk write nor a redraw.
     pub fn add(&mut self, payload: Payload, app: SourceApp, created_at: u64) -> bool {
-        if let Some(head) = self.items.first() {
-            if same_content(&head.payload, &payload) {
-                return false;
+        let hash = content_hash(&payload);
+        // The hash narrows it down; the byte compare settles it. A collision must
+        // not hand the user someone else's clip when they press the card.
+        let twin = self
+            .items
+            .iter()
+            .position(|i| i.hash == hash && same_content(&i.payload, &payload));
+
+        if let Some(pos) = twin {
+            let unchanged = pos == 0 && self.items[0].created_at == created_at;
+            let mut item = self.items.remove(pos);
+            item.created_at = created_at;
+            // Where it came from is where it was *last* copied from — the header
+            // and the timestamp on one card have to tell the same story. An app we
+            // could not identify does not get to erase the one we knew.
+            if !app.bundle.is_empty() {
+                item.app = app;
             }
+            self.items.insert(0, item);
+            return !unchanged;
         }
+
         let id = self.next_id;
         self.next_id += 1;
-        self.items.insert(0, ClipItem { id, payload, app, created_at });
+        self.items.insert(0, ClipItem::new(id, payload, app, created_at));
         self.items.truncate(MAX_ITEMS);
         true
     }
@@ -95,10 +127,28 @@ impl History {
     /// Puts back what was on disk at launch. Ids continue from the highest one
     /// seen: a fresh clip must never reuse the id of a restored one, or picking a
     /// card would hand back the wrong content.
-    pub fn restore(&mut self, items: Vec<ClipItem>) {
+    ///
+    /// Duplicates are collapsed on the way in — the file was written by a version
+    /// that let the same content sit on several cards, and the user should not
+    /// have to copy each one again to be rid of it. Newest first means the copy we
+    /// keep is the most recent one. Returns how many it collapsed, so the caller
+    /// can write the cleaned history back instead of leaving the copies on disk.
+    pub fn restore(&mut self, items: Vec<ClipItem>) -> usize {
         self.next_id = items.iter().map(|i| i.id).max().unwrap_or(0) + 1;
-        self.items = items;
+        let before = items.len();
+        let mut kept: Vec<ClipItem> = Vec::with_capacity(items.len());
+        for item in items {
+            let dup = kept
+                .iter()
+                .any(|k| k.hash == item.hash && same_content(&k.payload, &item.payload));
+            if !dup {
+                kept.push(item);
+            }
+        }
+        let collapsed = before - kept.len();
+        self.items = kept;
         self.items.truncate(MAX_ITEMS);
+        collapsed
     }
 
     /// Drops one clip for good. Returns false when the id is already gone: the
@@ -135,6 +185,24 @@ impl History {
     pub fn view(&self) -> Vec<ClipView> {
         self.items.iter().map(to_view).collect()
     }
+}
+
+/// A cheap fingerprint of what the clip holds. Kind is hashed with it so a text
+/// clip and an image can never look alike, whatever their bytes.
+fn content_hash(payload: &Payload) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    match payload {
+        Payload::Text(s) => {
+            0u8.hash(&mut h);
+            s.hash(&mut h);
+        }
+        Payload::Image { png, .. } => {
+            1u8.hash(&mut h);
+            png.hash(&mut h);
+        }
+    }
+    h.finish()
 }
 
 fn same_content(a: &Payload, b: &Payload) -> bool {
@@ -281,17 +349,78 @@ mod tests {
     fn copying_the_same_thing_twice_adds_one_clip() {
         let mut h = History::new();
         assert!(h.add(Payload::Text("dup".into()), app(), 1));
-        assert!(!h.add(Payload::Text("dup".into()), app(), 2));
-        assert_eq!(h.view().len(), 1);
+        h.add(Payload::Text("dup".into()), app(), 2);
+        let v = h.view();
+        assert_eq!(v.len(), 1);
+        assert_eq!(v[0].created_at, 2, "the card still says it was copied a while ago");
     }
 
     #[test]
-    fn same_text_returns_after_something_else() {
+    fn re_copying_the_same_clip_at_the_same_moment_changes_nothing() {
+        // The watcher can see one copy twice. Without this the app rewrites the
+        // index and redraws the popup for a history that did not move.
+        let mut h = History::new();
+        h.add(Payload::Text("dup".into()), app(), 1);
+        assert!(!h.add(Payload::Text("dup".into()), app(), 1));
+    }
+
+    #[test]
+    fn copying_something_from_further_down_lifts_it_back_to_the_front() {
         let mut h = History::new();
         h.add(Payload::Text("a".into()), app(), 1);
         h.add(Payload::Text("b".into()), app(), 2);
+        let old_id = h.view()[1].id;
+
         assert!(h.add(Payload::Text("a".into()), app(), 3));
-        assert_eq!(h.view().len(), 3);
+        let v = h.view();
+        assert_eq!(v.len(), 2, "the copy came back as a second card");
+        assert_eq!(v[0].text, "a");
+        assert_eq!(v[0].created_at, 3);
+        assert_eq!(v[0].id, old_id, "the clip was rebuilt instead of moved — its image file would be orphaned");
+    }
+
+    #[test]
+    fn the_same_image_copied_again_is_the_same_card() {
+        let mut h = History::new();
+        let png = vec![0x89, 0x50, 1, 2, 3];
+        h.add(Payload::Image { png: png.clone(), width: 2, height: 2 }, app(), 1);
+        h.add(Payload::Text("between".into()), app(), 2);
+        h.add(Payload::Image { png, width: 2, height: 2 }, app(), 3);
+
+        let v = h.view();
+        assert_eq!(v.len(), 2);
+        assert_eq!(v[0].kind, "image");
+    }
+
+    #[test]
+    fn a_returning_clip_says_where_it_was_copied_from_this_time() {
+        let mut h = History::new();
+        h.add(Payload::Text("path".into()), app(), 1);
+        let browser = SourceApp { name: "Safari".into(), bundle: "com.apple.Safari".into(), icon: String::new() };
+        h.add(Payload::Text("path".into()), browser, 2);
+        assert_eq!(h.view()[0].app_name, "Safari");
+    }
+
+    #[test]
+    fn an_unknown_app_does_not_erase_the_one_we_knew() {
+        let mut h = History::new();
+        h.add(Payload::Text("path".into()), app(), 1);
+        h.add(Payload::Text("path".into()), SourceApp::default(), 2);
+        assert_eq!(h.view()[0].app_name, "Ghostty");
+    }
+
+    #[test]
+    fn duplicates_written_by_an_older_version_are_collapsed_on_load() {
+        let mut h = History::new();
+        h.restore(vec![
+            ClipItem::new(3, Payload::Text("dup".into()), app(), 30),
+            ClipItem::new(2, Payload::Text("other".into()), app(), 20),
+            ClipItem::new(1, Payload::Text("dup".into()), app(), 10),
+        ]);
+        let v = h.view();
+        assert_eq!(v.len(), 2, "the old file's duplicate survived the load");
+        assert_eq!(v[0].id, 3, "the copy we kept is not the most recent one");
+        assert_eq!(v[1].text, "other");
     }
 
     #[test]

@@ -66,7 +66,13 @@ body.popup {
   box-shadow: 0 0 0 2px rgba(57, 192, 179, 0.4), 0 14px 40px rgba(0, 0, 0, 0.45);
 }
 
-/* --- search --- */
+/* --- search ---
+   A readout, not a field: it shows up the moment you start typing and goes away
+   with the last character. Nothing here is focusable — the caret is drawn, not
+   the system's, because there is no input for the system to put one in. */
+.search[hidden] {
+  display: none;
+}
 .search {
   display: flex;
   align-items: center;
@@ -78,19 +84,37 @@ body.popup {
   flex: 0 0 auto;
   opacity: 0.55;
 }
-.search input {
+.typed {
   flex: 1;
   min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: 13px;
-  user-select: text;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
 }
-.search input::placeholder {
-  color: var(--ink-2);
+.query {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.caret {
+  flex: 0 0 auto;
+  width: 1.5px;
+  height: 15px;
+  background: var(--accent);
+  animation: caret 1.1s step-end infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
 }
 .search .count {
   font-family: var(--mono);

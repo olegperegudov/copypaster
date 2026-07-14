@@ -91,12 +91,12 @@ impl Store {
                         return None;
                     }
                 };
-                Some(ClipItem {
-                    id: s.id,
+                Some(ClipItem::new(
+                    s.id,
                     payload,
-                    app: SourceApp { name: s.app_name, bundle: s.app_bundle, icon: s.app_icon },
-                    created_at: s.created_at,
-                })
+                    SourceApp { name: s.app_name, bundle: s.app_bundle, icon: s.app_icon },
+                    s.created_at,
+                ))
             })
             .collect();
 

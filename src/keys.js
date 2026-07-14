@@ -1,0 +1,62 @@
+// What a keypress means in the popup. Pure, so the rules can be read — and
+// tested — without a window: main.js only carries them out.
+//
+// The shape of it: there is nowhere to *go* to search. You walk the cards and the
+// app icons, and whatever you type goes into the search on its own, from wherever
+// you are standing. That is why ⌫ erases what you typed rather than deleting a
+// card — the deleting key is ⌦.
+
+/**
+ * @param {{key: string, meta?: boolean, ctrl?: boolean, alt?: boolean}} press
+ * @param {{zone: string, query: string, hasFilter: boolean}} state
+ * @returns {object|null} the action, or null when the popup has no business with it
+ */
+export function keyAction(press, state) {
+  const { key, meta, ctrl, alt } = press;
+  const { zone, query, hasFilter } = state;
+
+  // Cmd/Ctrl combinations belong to the system, not to us.
+  if (meta || ctrl) return null;
+
+  switch (key) {
+    case "Escape":
+      return { type: "close" };
+    case "ArrowUp":
+      return { type: "zone", delta: -1 };
+    case "ArrowDown":
+      return { type: "zone", delta: 1 };
+    case "ArrowLeft":
+      return { type: "move", delta: -1 };
+    case "ArrowRight":
+      return { type: "move", delta: 1 };
+    case "Enter":
+      return { type: "paste" };
+    case "Backspace":
+      // One key, read in the order the user thinks: it takes back the last thing
+      // they did. Something typed — erase a letter of it; nothing typed but a
+      // filter is on — let the filter go.
+      if (query) return { type: "erase" };
+      if (hasFilter) return { type: "clearFilter" };
+      return null;
+    case "Delete":
+      // Destructive, so it only fires where the user is standing and can see what
+      // is selected.
+      return zone === "cards" ? { type: "deleteCard" } : null;
+    default:
+      break;
+  }
+
+  // A digit is a shortcut to the n-th card while the search is empty, and a
+  // character the moment there is a query to add it to — you cannot search for
+  // "v2" with a key that pastes card two.
+  if (!query && /^[1-9]$/.test(key)) {
+    return { type: "paste", index: Number(key) - 1 };
+  }
+
+  // Everything else printable is the search. Option-combinations are not: on a Mac
+  // ⌥ turns letters into symbols, and ⌥V is the key that opened this window.
+  if (key.length === 1 && !alt) {
+    return { type: "type", char: key };
+  }
+  return null;
+}

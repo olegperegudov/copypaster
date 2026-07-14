@@ -34,7 +34,7 @@ CopyPaster is built and used on macOS. The Windows build exists and installs, bu
 
 ## Everything you copied, still there
 
-A card per clip, newest first. `⏎` or `1`…`9` — and it's back in the window you came from.
+A card per clip, newest first. `⏎` or `1`…`9` — and it's back in the window you came from. Copy the same thing twice and you get one card, not two: it moves back to the front with a fresh time.
 
 ![The popup over the desktop](docs/screenshots/popup.png)
 
@@ -46,13 +46,13 @@ The icon row on top. Step onto an app — only its clips remain.
 
 ## Or just start typing
 
-Search filters from the first letter, matches marked. No Enter needed.
+There is nowhere to go to search: type from wherever you are standing and the query appears above the icons, filtering from the first letter, matches marked. `⌫` takes a letter back, `⌦` deletes a card.
 
 ![Live search](docs/screenshots/search.png)
 
 ## Hands stay on the keyboard
 
-Up and down between zones, left and right inside one. The full sheet lives in the menu-bar menu.
+Up and down between the cards and the icons, left and right inside them. The full sheet lives in the menu-bar menu.
 
 ![The shortcuts sheet](docs/screenshots/shortcuts.png)
 
@@ -62,7 +62,7 @@ While macOS hangs that little thumbnail in the corner, the screenshot is not on 
 
 ## Settings
 
-Click the parrot in the menu bar → **Settings**. How long clips are kept (a day, a week, a month, or no limit — a week by default), and whether a screenshot lands on the clipboard at once.
+Click the parrot in the menu bar → **Settings**. How long clips are kept (a day, a week, a month, or no limit — a week by default), whether a screenshot lands on the clipboard at once, and how large the interface is drawn.
 
 ![Settings](docs/screenshots/settings.png)
 
