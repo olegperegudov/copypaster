@@ -2,8 +2,12 @@
 // zone (digits pick a card, or type a digit), so the zone you are standing in is
 // the one lit up.
 
+import { applyScaleFromSettings } from "./scale.js";
+
 const { listen } = window.__TAURI__.event;
 const { getCurrentWindow } = window.__TAURI__.window;
+
+applyScaleFromSettings();
 
 const zones = document.querySelectorAll(".zone[data-zone]");
 

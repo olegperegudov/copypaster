@@ -417,3 +417,31 @@ kbd {
   font-size: 11px;
   color: var(--ink-2);
 }
+.scale-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.scale-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.scale-value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: right;
+}
+/* A line of real text at the chosen size, so the number has something to mean.
+   Its own zoom (set in settings.js) nets the target on top of the window's, so
+   the sample is drawn at the size the interface will actually be. */
+.scale-sample {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ink);
+  transform-origin: left center;
+}

@@ -6,6 +6,7 @@
 
 import { clamp, wrap } from "./nav.js";
 import { age, appRow, highlightMatches, visibleClips } from "./search.js";
+import { applyScaleFromSettings } from "./scale.js";
 
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
@@ -322,6 +323,9 @@ document.addEventListener("mousedown", (e) => {
 listen("history-changed", load);
 
 listen("popup-opened", async () => {
+  // The scale may have changed in settings while the popup was hidden — pick it
+  // up on the way in, before anything is drawn at the old size.
+  applyScaleFromSettings();
   // A fresh summon starts clean: last time's query and filter are not what the
   // user means by "show me my clipboard".
   state.query = "";
@@ -335,4 +339,5 @@ listen("popup-opened", async () => {
   await load();
 });
 
+applyScaleFromSettings();
 load().then(() => log("popup ready"));

@@ -62,18 +62,18 @@ struct SettingsState {
     dir: PathBuf,
 }
 
-/// What the settings window shows: the chosen retention and the options for it.
+/// What the settings window shows: the chosen retention and the options for it,
+/// plus the interface scale and the ends of its slider.
 #[tauri::command]
 fn get_settings(cfg: tauri::State<SettingsState>) -> serde_json::Value {
-    let retention = cfg
-        .current
-        .lock()
-        .map(|s| s.retention_days)
-        .unwrap_or(settings::DEFAULT_RETENTION_DAYS);
+    let current = cfg.current.lock().map(|s| *s).unwrap_or_default();
     serde_json::json!({
-        "retention_days": retention,
+        "retention_days": current.retention_days,
         "retention_choices": settings::RETENTION_CHOICES,
         "instant_screenshots": instant_state(),
+        "ui_scale": current.ui_scale,
+        "ui_scale_min": settings::MIN_UI_SCALE,
+        "ui_scale_max": settings::MAX_UI_SCALE,
     })
 }
 
@@ -91,7 +91,10 @@ fn set_retention_days(
     if !settings::RETENTION_CHOICES.contains(&days) {
         return Err(format!("not one of the offered choices: {}", days));
     }
-    let chosen = settings::Settings { retention_days: days };
+    // Change only the retention: the other settings (the interface scale) live in
+    // the same file and must survive a write that is not about them.
+    let mut chosen = cfg.current.lock().map(|s| *s).unwrap_or_default();
+    chosen.retention_days = days;
     settings::save(&cfg.dir, &chosen)?;
     if let Ok(mut s) = cfg.current.lock() {
         *s = chosen;
@@ -105,6 +108,21 @@ fn set_retention_days(
         let _ = app.emit("history-changed", ());
     }
     debug_log::log(&format!("settings: retention {} days, {} clips dropped", days, dropped));
+    Ok(())
+}
+
+/// Set how much bigger the interface renders. The frontend applies it as a page
+/// zoom; here it is clamped and stored so it holds across launches, and so the
+/// next time a sheet opens its window is grown to fit the zoomed content.
+#[tauri::command]
+fn set_ui_scale(cfg: tauri::State<SettingsState>, scale: f32) -> Result<(), String> {
+    let mut chosen = cfg.current.lock().map(|s| *s).unwrap_or_default();
+    chosen.ui_scale = settings::clamp_scale(scale);
+    settings::save(&cfg.dir, &chosen)?;
+    if let Ok(mut s) = cfg.current.lock() {
+        *s = chosen;
+    }
+    debug_log::log(&format!("settings: ui scale {:.2}", chosen.ui_scale));
     Ok(())
 }
 
@@ -289,9 +307,27 @@ fn toggle_popup(app: &AppHandle) {
 /// so the same window answers every time the menu item is pressed.
 const TRAY_WINDOWS: [&str; 2] = ["settings", "shortcuts"];
 
+/// The size each sheet is authored at, mirroring tauri.conf.json. The interface
+/// scale grows the window from here so the zoomed content is not clipped by a
+/// window that stayed at 1×.
+fn sheet_base_size(label: &str) -> Option<(f64, f64)> {
+    match label {
+        "settings" => Some((420.0, 430.0)),
+        "shortcuts" => Some((420.0, 590.0)),
+        _ => None,
+    }
+}
+
 fn show_window(app: &AppHandle, label: &str) {
     match app.get_webview_window(label) {
         Some(w) => {
+            if let Some((bw, bh)) = sheet_base_size(label) {
+                let scale = app
+                    .try_state::<SettingsState>()
+                    .and_then(|c| c.current.lock().ok().map(|s| s.ui_scale))
+                    .unwrap_or(settings::DEFAULT_UI_SCALE) as f64;
+                let _ = w.set_size(tauri::LogicalSize::new(bw * scale, bh * scale));
+            }
             let _ = w.show();
             let _ = w.set_focus();
         }
@@ -327,6 +363,7 @@ pub fn run() {
             get_instant_screenshots,
             get_settings,
             set_retention_days,
+            set_ui_scale,
             set_instant_screenshots,
             check_for_update,
             install_update

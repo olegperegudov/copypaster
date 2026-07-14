@@ -5,6 +5,8 @@
 // keep it — and shortening the window deletes what already fell outside it,
 // immediately, not at some later sweep.
 
+import { applyScale } from "./scale.js";
+
 const { invoke } = window.__TAURI__.core;
 const { getCurrentWindow } = window.__TAURI__.window;
 
@@ -41,10 +43,45 @@ function renderRetention(choices, chosen) {
   }
 }
 
+// This window opens at the saved scale; the sample line nets the *target* scale
+// on top of that, so a drag previews the new size without resizing the window
+// under the cursor. The popup and the cheat sheet take the change on next open.
+let openedScale = 1;
+
+function reflectScale(target) {
+  $("#scale-value").textContent = `${Math.round(target * 100)}%`;
+  $("#scale-sample").style.zoom = String(target / openedScale);
+}
+
+function renderScale(cfg) {
+  openedScale = cfg.ui_scale ?? 1;
+  const slider = $("#ui-scale");
+  // The ends come from Rust, which owns the range and clamps to it — the slider
+  // is just its face, so it must not carry a second copy of the bounds.
+  slider.min = String(cfg.ui_scale_min);
+  slider.max = String(cfg.ui_scale_max);
+  slider.step = "0.05";
+  slider.value = String(openedScale);
+  reflectScale(openedScale);
+
+  slider.addEventListener("input", () => reflectScale(Number(slider.value)));
+  // Persist once, when the drag settles — not on every intermediate pixel.
+  slider.addEventListener("change", async () => {
+    try {
+      await invoke("set_ui_scale", { scale: Number(slider.value) });
+      say("Saved — the popup uses it the next time you open it.");
+    } catch (err) {
+      say(`Couldn't save: ${err}`);
+    }
+  });
+}
+
 async function load() {
   const cfg = await invoke("get_settings");
+  applyScale(cfg.ui_scale);
   renderRetention(cfg.retention_choices, cfg.retention_days);
   $("#instant").checked = cfg.instant_screenshots;
+  renderScale(cfg);
 }
 
 $("#instant").addEventListener("change", async (e) => {
