@@ -15,7 +15,13 @@ export function keyAction(press, state) {
   const { key, meta, ctrl, alt } = press;
   const { zone, query, hasFilter } = state;
 
-  // Cmd/Ctrl combinations belong to the system, not to us.
+  // ⌘⌫ is how a Mac deletes the thing you are looking at — Finder, Mail, every
+  // list. On a laptop the forward-delete key it stands in for is Fn+⌫, which is
+  // not a one-handed gesture.
+  if (meta && key === "Backspace") {
+    return zone === "cards" ? { type: "deleteCard" } : null;
+  }
+  // Every other Cmd/Ctrl combination belongs to the system, not to us.
   if (meta || ctrl) return null;
 
   switch (key) {
@@ -39,8 +45,9 @@ export function keyAction(press, state) {
       if (hasFilter) return { type: "clearFilter" };
       return null;
     case "Delete":
-      // Destructive, so it only fires where the user is standing and can see what
-      // is selected.
+      // The other way in — a real ⌦ key, or Fn+⌫ on a laptop. Destructive either
+      // way, so it only fires where the user is standing and can see what is
+      // selected.
       return zone === "cards" ? { type: "deleteCard" } : null;
     default:
       break;

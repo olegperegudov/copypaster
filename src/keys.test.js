@@ -24,6 +24,10 @@ describe("typing goes to the search from wherever you are", () => {
   it("leaves ⌘-combinations to the system", () => {
     expect(keyAction(press("q", { meta: true }), at())).toBeNull();
   });
+
+  it("does not type a letter that arrived with ⌘ held", () => {
+    expect(keyAction(press("a", { meta: true }), at({ query: "as" }))).toBeNull();
+  });
 });
 
 describe("digits: a shortcut while the search is empty, characters once it is not", () => {
@@ -51,6 +55,18 @@ describe("backspace erases, delete deletes", () => {
 
   it("deletes the selected card", () => {
     expect(keyAction(press("Delete"), at())).toEqual({ type: "deleteCard" });
+  });
+
+  it("deletes on ⌘⌫ too — Fn+⌫ is not a one-handed gesture on a laptop", () => {
+    expect(keyAction(press("Backspace", { meta: true }), at())).toEqual({ type: "deleteCard" });
+  });
+
+  it("⌘⌫ deletes the card, it does not erase the query", () => {
+    expect(keyAction(press("Backspace", { meta: true }), at({ query: "ass" }))).toEqual({ type: "deleteCard" });
+  });
+
+  it("⌘⌫ on the app row deletes nothing", () => {
+    expect(keyAction(press("Backspace", { meta: true }), at({ zone: "apps" }))).toBeNull();
   });
 
   it("does not delete a card from the app row, where nothing is selected", () => {

@@ -46,7 +46,7 @@ The icon row on top. Step onto an app — only its clips remain.
 
 ## Or just start typing
 
-There is nowhere to go to search: type from wherever you are standing and the query appears above the icons, filtering from the first letter, matches marked. `⌫` takes a letter back, `⌦` deletes a card.
+There is nowhere to go to search: type from wherever you are standing and the query appears above the icons, filtering from the first letter, matches marked. `⌫` takes a letter back; a card is deleted with `⌘⌫`.
 
 ![Live search](docs/screenshots/search.png)
 
