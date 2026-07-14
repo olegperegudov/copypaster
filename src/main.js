@@ -9,7 +9,7 @@
 // gesture: ⌥V, type "assist", arrow to the card, Enter — with no trip up into a
 // field and back down again.
 
-import { clamp, wrap } from "./nav.js";
+import { clamp, keepCursorOn, wrap } from "./nav.js";
 import { keyAction } from "./keys.js";
 import { age, appRow, highlightMatches, visibleClips } from "./search.js";
 import { applyScaleFromSettings } from "./scale.js";
@@ -217,13 +217,18 @@ function clearAppFilter() {
 
 /** Every route into the query runs through here — a filter on an app that the
  *  new query has emptied out of the row is one the user can no longer see or
- *  reach, so it goes rather than silently hiding cards. */
+ *  reach, so it goes rather than silently hiding cards.
+ *
+ *  The card under the cursor is held across the change: typing is done while
+ *  reading the cards, and a card that survives the new query must not slide out
+ *  from under the cursor because the ones before it disappeared. */
 function setQuery(query) {
+  const held = cards()[state.cardIdx]?.id ?? null;
   state.query = query;
   if (state.appFilter && !apps().some((a) => a.bundle === state.appFilter)) {
     state.appFilter = null;
   }
-  state.cardIdx = 0;
+  state.cardIdx = keepCursorOn(cards(), held);
   render();
 }
 
