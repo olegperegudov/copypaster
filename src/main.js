@@ -225,10 +225,19 @@ function stepZone(delta) {
 /** ⌫ on the icons, ⌫ on the cards with nothing left to erase, or a click on the
  *  chip. Dropping a filter only brings cards back, so the card to come back to is
  *  always there: on the icons it is the one left behind on the way up, on the
- *  cards the one under the cursor. */
+ *  cards the one under the cursor.
+ *
+ *  Letting the filter go from the icons is also the way back down: there is
+ *  nothing left up there to filter by, so the cursor rides back onto the card it
+ *  came up from instead of hanging on a row that no longer does anything. */
 function clearAppFilter() {
-  const held = state.zone === "apps" ? state.leftCardId : cards()[state.cardIdx]?.id ?? null;
+  const fromApps = state.zone === "apps";
+  const held = fromApps ? state.leftCardId : cards()[state.cardIdx]?.id ?? null;
   state.appFilter = null;
+  if (fromApps) {
+    state.zone = "cards";
+    invoke("set_zone", { zone: "cards" }).catch(() => {});
+  }
   state.cardIdx = keepCursorOn(cards(), held);
   render();
 }
