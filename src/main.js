@@ -152,10 +152,9 @@ function renderCards(list) {
     badge.className = clip.kind === "image" ? "badge image" : "badge";
     badge.textContent = clip.kind === "image" ? "image" : "text";
     const meta = document.createElement("span");
-    meta.textContent =
-      clip.kind === "image"
-        ? `${clip.width}×${clip.height}`
-        : age(clip.createdAt, Math.floor(Date.now() / 1000));
+    // Both kinds show when they were copied — the pixel size of a shot is a fact
+    // about the picture, not about finding it again in the history.
+    meta.textContent = age(clip.createdAt, Math.floor(Date.now() / 1000));
     foot.append(badge, meta);
 
     card.append(head, body, foot);
