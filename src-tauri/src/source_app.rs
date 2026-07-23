@@ -1,7 +1,7 @@
 //! Which app the clip came from.
 //!
 //! Read at the moment the clipboard changes, not when the popup opens — by then
-//! the frontmost app is CopyPaster itself. The name is the card header, the
+//! the frontmost app is Iago itself. The name is the card header, the
 //! bundle id is the filter key, the icon is cached per bundle id because
 //! rasterising an NSImage on every copy is pure waste.
 

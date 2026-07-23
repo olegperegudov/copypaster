@@ -28,11 +28,11 @@ Both run in CI before anything is built.
 
 Every push to `main` is a release. CI bumps the patch version itself, tags it, builds Windows and both macOS architectures, and publishes the GitHub release plus the `latest.json` the in-app updater reads. Never bump by hand.
 
-Each release also carries version-less copies of the installers (`CopyPaster_macOS_AppleSilicon.dmg`, `CopyPaster_macOS_Intel.dmg`, `CopyPaster_Windows_Setup.exe`) so the README buttons can link straight at a file that survives the next bump.
+Each release also carries version-less copies of the installers (`Iago_macOS_AppleSilicon.dmg`, `Iago_macOS_Intel.dmg`, `Iago_Windows_Setup.exe`) so the README buttons can link straight at a file that survives the next bump.
 
 ## Signing
 
-macOS builds are signed with a stable self-signed certificate ("CopyPaster Code Signing"), not ad-hoc. macOS binds the Accessibility grant to the *signature*, so the user grants it once, at install, and updates never re-ask — an ad-hoc signature changes with every build and would.
+macOS builds are signed with a stable self-signed certificate ("Iago Code Signing"), not ad-hoc. macOS binds the Accessibility grant to the *signature*, so the user grants it once, at install, and updates never re-ask — an ad-hoc signature changes with every build and would.
 
 Not notarized (that needs a paid Apple account), so the first open still needs `xattr -cr`.
 
@@ -55,4 +55,4 @@ Remove the probes in the same change that fixes the bug.
 | | |
 |---|---|
 | History, images, settings | the OS app-data dir (`app_data_dir()`) — `index.json`, `img/<id>.png`, `settings.json` |
-| Session log | `~/Library/Application Support/copypaster/debug.log` |
+| Session log | `~/Library/Application Support/iago/debug.log` |

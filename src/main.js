@@ -323,7 +323,7 @@ document.addEventListener("keydown", (e) => {
 el.clear.addEventListener("click", clearAppFilter);
 
 // The popup window is a full-width strip, mostly bare: what the user sees through
-// it is their own screen, so a click on the bare part is a click *past* CopyPaster
+// it is their own screen, so a click on the bare part is a click *past* Iago
 // and means "go away". Clicks outside the window are caught natively (mac_window).
 document.addEventListener("mousedown", (e) => {
   if (!e.target.closest(".glass, .card, .empty, .apps-clear")) invoke("close_popup");

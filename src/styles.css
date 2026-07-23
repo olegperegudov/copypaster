@@ -1,4 +1,4 @@
-/* CopyPaster popup.
+/* Iago popup.
    The window itself is transparent and never scrolls: the three zones float
    over whatever the user is looking at. Any bounce or scrollbar here shows up
    as white gaps around the glass, so both are turned off at the root. */

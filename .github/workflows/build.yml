@@ -1,4 +1,4 @@
-name: Build CopyPaster
+name: Build Iago
 
 on:
   push:
@@ -117,7 +117,7 @@ jobs:
         with:
           args: --target x86_64-pc-windows-msvc --bundles nsis
           tagName: ${{ needs.version.outputs.tag }}
-          releaseName: CopyPaster ${{ needs.version.outputs.tag }}
+          releaseName: Iago ${{ needs.version.outputs.tag }}
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
@@ -135,7 +135,7 @@ jobs:
         with:
           args: --target x86_64-pc-windows-msvc --bundles nsis
           tagName: ${{ needs.version.outputs.tag }}
-          releaseName: CopyPaster ${{ needs.version.outputs.tag }}
+          releaseName: Iago ${{ needs.version.outputs.tag }}
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
@@ -152,8 +152,8 @@ jobs:
           TAG: ${{ needs.version.outputs.tag }}
         run: |
           exe=$(ls src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe | head -1)
-          cp "$exe" CopyPaster_Windows_Setup.exe
-          gh release upload "$TAG" CopyPaster_Windows_Setup.exe --clobber --repo "$GITHUB_REPOSITORY"
+          cp "$exe" Iago_Windows_Setup.exe
+          gh release upload "$TAG" Iago_Windows_Setup.exe --clobber --repo "$GITHUB_REPOSITORY"
 
   build-macos:
     # Runs AFTER build-windows, not beside it: tauri-action publishes latest.json
@@ -185,7 +185,7 @@ jobs:
         shell: bash
         run: "$HOME/.cargo/bin/cargo test --lib"
 
-      # CopyPaster pastes by posting a synthetic Cmd+V, which macOS only allows
+      # Iago pastes by posting a synthetic Cmd+V, which macOS only allows
       # with an Accessibility grant. That grant is anchored to the code signature:
       # an ad-hoc build gets a new identity on every release, so the user would
       # have to re-approve the app after each update. Signing with a *stable*
@@ -201,10 +201,10 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           set -euo pipefail
-          KEYCHAIN="$RUNNER_TEMP/copypaster-signing.keychain-db"
+          KEYCHAIN="$RUNNER_TEMP/iago-signing.keychain-db"
           KEYCHAIN_PWD="$(openssl rand -base64 24)"
-          P12="$RUNNER_TEMP/copypaster.p12"
-          CERT="$RUNNER_TEMP/copypaster-cert.pem"
+          P12="$RUNNER_TEMP/iago.p12"
+          CERT="$RUNNER_TEMP/iago-cert.pem"
 
           printf '%s' "$APPLE_CERTIFICATE" | openssl base64 -d -A > "$P12"
 
@@ -245,7 +245,7 @@ jobs:
         with:
           args: --target aarch64-apple-darwin --bundles app,dmg
           tagName: ${{ needs.version.outputs.tag }}
-          releaseName: CopyPaster ${{ needs.version.outputs.tag }}
+          releaseName: Iago ${{ needs.version.outputs.tag }}
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
@@ -261,7 +261,7 @@ jobs:
         with:
           args: --target aarch64-apple-darwin --bundles app,dmg
           tagName: ${{ needs.version.outputs.tag }}
-          releaseName: CopyPaster ${{ needs.version.outputs.tag }}
+          releaseName: Iago ${{ needs.version.outputs.tag }}
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
@@ -278,7 +278,7 @@ jobs:
         with:
           args: --target x86_64-apple-darwin --bundles app,dmg
           tagName: ${{ needs.version.outputs.tag }}
-          releaseName: CopyPaster ${{ needs.version.outputs.tag }}
+          releaseName: Iago ${{ needs.version.outputs.tag }}
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
@@ -294,13 +294,13 @@ jobs:
         with:
           args: --target x86_64-apple-darwin --bundles app,dmg
           tagName: ${{ needs.version.outputs.tag }}
-          releaseName: CopyPaster ${{ needs.version.outputs.tag }}
+          releaseName: Iago ${{ needs.version.outputs.tag }}
           releaseBody: "See the assets below to download and install."
           releaseDraft: false
           prerelease: false
 
       # Stable, version-less copies for the README download buttons (both Macs).
-      # Direct links: releases/latest/download/CopyPaster_macOS_*.dmg.
+      # Direct links: releases/latest/download/Iago_macOS_*.dmg.
       - name: Publish stable-named macOS installers
         shell: bash
         env:
@@ -309,9 +309,9 @@ jobs:
         run: |
           arm=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
           intel=$(ls src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
-          cp "$arm" CopyPaster_macOS_AppleSilicon.dmg
-          cp "$intel" CopyPaster_macOS_Intel.dmg
-          gh release upload "$TAG" CopyPaster_macOS_AppleSilicon.dmg CopyPaster_macOS_Intel.dmg --clobber --repo "$GITHUB_REPOSITORY"
+          cp "$arm" Iago_macOS_AppleSilicon.dmg
+          cp "$intel" Iago_macOS_Intel.dmg
+          gh release upload "$TAG" Iago_macOS_AppleSilicon.dmg Iago_macOS_Intel.dmg --clobber --repo "$GITHUB_REPOSITORY"
 
       # The in-app updater is only as good as latest.json. Fail loudly here rather
       # than ship a manifest that silently strands one platform on an old version.

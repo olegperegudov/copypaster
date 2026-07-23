@@ -1,6 +1,6 @@
 //! Append-only debug log next to the app's data dir.
 //!
-//! CopyPaster runs headless in the tray: when a paste lands in the wrong window
+//! Iago runs headless in the tray: when a paste lands in the wrong window
 //! or a screenshot never shows up, there is no console to look at. This file is
 //! the only witness, so every clipboard/paste/screenshot decision writes a line.
 
@@ -14,7 +14,7 @@ static LOG_PATH: Mutex<Option<PathBuf>> = Mutex::new(None);
 pub fn init() {
     let dir = dirs::data_dir()
         .unwrap_or_else(std::env::temp_dir)
-        .join("copypaster");
+        .join("iago");
     let _ = crate::private::create_dir(&dir);
     let path = dir.join("debug.log");
     // Fresh file per launch — an unbounded log on a tray app that runs for
@@ -24,7 +24,7 @@ pub fn init() {
     if let Ok(mut g) = LOG_PATH.lock() {
         *g = Some(path);
     }
-    log("--- copypaster started ---");
+    log("--- iago started ---");
 }
 
 pub fn log(msg: &str) {

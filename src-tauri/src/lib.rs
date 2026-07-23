@@ -1,4 +1,4 @@
-//! CopyPaster — clipboard history in the menu bar.
+//! Iago — clipboard history in the menu bar.
 //!
 //! Shape of the thing: a clipboard watcher and a screenshot watcher feed a ring
 //! buffer of clips; Option+V raises a non-activating panel showing them as
@@ -507,7 +507,7 @@ pub fn run() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running CopyPaster");
+        .expect("error while running Iago");
 }
 
 /// Menu-bar menu. Mirrors Ribbit/Quill: update first, then the utilities, then
@@ -519,11 +519,11 @@ fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let version = MenuItem::with_id(
         app,
         "version",
-        format!("CopyPaster v{}", env!("CARGO_PKG_VERSION")),
+        format!("Iago v{}", env!("CARGO_PKG_VERSION")),
         false,
         None::<&str>,
     )?;
-    let quit = MenuItem::with_id(app, "quit", "Quit CopyPaster", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit Iago", true, None::<&str>)?;
 
     let menu = MenuBuilder::new(app)
         .item(&update)
@@ -539,7 +539,7 @@ fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(update.clone());
 
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("CopyPaster — clipboard history (⌥V)")
+        .tooltip("Iago — clipboard history (⌥V)")
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(move |app, event| match event.id().as_ref() {

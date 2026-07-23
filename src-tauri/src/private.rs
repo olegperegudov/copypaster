@@ -1,6 +1,6 @@
 //! Files this app creates are for its owner only.
 //!
-//! Everything CopyPaster writes — the clipboard history, the images, the session
+//! Everything Iago writes — the clipboard history, the images, the session
 //! log — is a transcript of what the user copied. `std::fs::write` obeys the
 //! umask, which on a default macOS account is 022: the file lands world-readable
 //! and any process running as any user on the machine can read the lot. So the

@@ -195,7 +195,7 @@ mod tests {
     /// A scratch directory of its own per test — the tests run in parallel.
     fn temp_store() -> Store {
         let n = SEQ.fetch_add(1, Ordering::Relaxed);
-        let dir = std::env::temp_dir().join(format!("copypaster-test-{}-{}", std::process::id(), n));
+        let dir = std::env::temp_dir().join(format!("iago-test-{}-{}", std::process::id(), n));
         let _ = std::fs::remove_dir_all(&dir);
         Store::new(dir)
     }

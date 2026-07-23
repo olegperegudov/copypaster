@@ -440,31 +440,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "copypaster"
-version = "0.1.26"
-dependencies = [
- "arboard",
- "base64 0.22.1",
- "block",
- "cocoa",
- "core-graphics 0.24.0",
- "dirs",
- "enigo",
- "image",
- "notify",
- "objc",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-nspanel",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-updater",
- "tokio",
- "windows 0.58.0",
-]
-
-[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1588,6 +1563,31 @@ dependencies = [
  "tokio",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "iago"
+version = "0.1.30"
+dependencies = [
+ "arboard",
+ "base64 0.22.1",
+ "block",
+ "cocoa",
+ "core-graphics 0.24.0",
+ "dirs",
+ "enigo",
+ "image",
+ "notify",
+ "objc",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-nspanel",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-updater",
+ "tokio",
+ "windows 0.58.0",
 ]
 
 [[package]]

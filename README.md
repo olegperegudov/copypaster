@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src/parrot.png" width="96" alt="CopyPaster logo" />
+  <img src="src/parrot.png" width="96" alt="Iago logo" />
 </p>
 
-<h1 align="center">CopyPaster</h1>
+<h1 align="center">Iago</h1>
 
 <p align="center">
   Clipboard history in the menu bar.<br/>
@@ -17,20 +17,20 @@
 ## Get it
 
 <p align="center">
-  <a href="https://github.com/olegperegudov/copypaster/releases/latest/download/CopyPaster_macOS_AppleSilicon.dmg"><img src="https://img.shields.io/badge/Download_for_macOS-Apple_Silicon-000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS, Apple Silicon" /></a>&nbsp;
-  <a href="https://github.com/olegperegudov/copypaster/releases/latest/download/CopyPaster_macOS_Intel.dmg"><img src="https://img.shields.io/badge/Download_for_macOS-Intel-666?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS, Intel" /></a>&nbsp;
-  <a href="https://github.com/olegperegudov/copypaster/releases/latest/download/CopyPaster_Windows_Setup.exe"><img src="https://img.shields.io/badge/Download_for-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" /></a>
+  <a href="https://github.com/olegperegudov/iago/releases/latest/download/Iago_macOS_AppleSilicon.dmg"><img src="https://img.shields.io/badge/Download_for_macOS-Apple_Silicon-000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS, Apple Silicon" /></a>&nbsp;
+  <a href="https://github.com/olegperegudov/iago/releases/latest/download/Iago_macOS_Intel.dmg"><img src="https://img.shields.io/badge/Download_for_macOS-Intel-666?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS, Intel" /></a>&nbsp;
+  <a href="https://github.com/olegperegudov/iago/releases/latest/download/Iago_Windows_Setup.exe"><img src="https://img.shields.io/badge/Download_for-Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" /></a>
 </p>
 
-Each button downloads the latest installer for that platform. Want an older build? Every version is on the [releases page](https://github.com/olegperegudov/copypaster/releases).
+Each button downloads the latest installer for that platform. Want an older build? Every version is on the [releases page](https://github.com/olegperegudov/iago/releases).
 
 Then:
 
-1. **Open it.** Apple isn't paid to trust us, so the first launch claims the app is *"damaged"*. It isn't — run `xattr -cr /Applications/CopyPaster.app` once in Terminal, then open it normally. Updates after that install themselves.
+1. **Open it.** Apple isn't paid to trust us, so the first launch claims the app is *"damaged"*. It isn't — run `xattr -cr /Applications/Iago.app` once in Terminal, then open it normally. Updates after that install themselves.
 2. **Grant Accessibility** when asked (System Settings → Privacy & Security → Accessibility). Without it the app cannot paste on your behalf. Once, at install — not again after every update.
 3. **Press ⌥V.** The history is there.
 
-CopyPaster is built and used on macOS. The Windows build exists and installs, but it isn't tested nearly as much — expect rough edges.
+Iago is built and used on macOS. The Windows build exists and installs, but it isn't tested nearly as much — expect rough edges.
 
 ## Everything you copied, still there
 
@@ -58,7 +58,7 @@ Up and down between the cards and the icons, left and right inside them. The ful
 
 ## Screenshots that are already on the clipboard
 
-While macOS hangs that little thumbnail in the corner, the screenshot is not on disk yet — so pasting it right away pastes the *previous* clip. Tick **"Screenshot straight to clipboard"** in the menu bar: the file lands at once, CopyPaster catches it, `⌘V` pastes the picture.
+While macOS hangs that little thumbnail in the corner, the screenshot is not on disk yet — so pasting it right away pastes the *previous* clip. Tick **"Screenshot straight to clipboard"** in the menu bar: the file lands at once, Iago catches it, `⌘V` pastes the picture.
 
 ## Settings
 
@@ -73,7 +73,7 @@ The parrot in the menu bar turns green when a new version is out. Click it, pick
 ## Privacy
 
 - Clips never leave the machine — no cloud, no sync, no telemetry.
-- **Passwords are not recorded.** A password manager marks what it copies as concealed; CopyPaster drops those clips instead of filing them.
+- **Passwords are not recorded.** A password manager marks what it copies as concealed; Iago drops those clips instead of filing them.
 - **Clips expire.** A week by default — change it in Settings, or turn expiry off if you would rather keep them.
 - The history is stored unencrypted, but the files are readable only by your user account — not by anything else running on the machine.
 

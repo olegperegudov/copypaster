@@ -4,7 +4,7 @@
 //! just in". A normal window steals focus when shown, so the app underneath is
 //! no longer frontmost and the synthetic Cmd+V goes nowhere useful. A panel with
 //! the NonactivatingPanel style mask takes keystrokes (we need typing in the
-//! search field) without activating CopyPaster — the same mechanism Spotlight
+//! search field) without activating Iago — the same mechanism Spotlight
 //! and Raycast use. It also surfaces over another app's full-screen Space, which
 //! a plain window cannot do.
 
@@ -13,7 +13,7 @@ use tauri::Manager as _;
 
 #[cfg(target_os = "macos")]
 tauri_nspanel::tauri_panel! {
-    panel!(CopyPasterPanel {
+    panel!(IagoPanel {
         config: {
             can_become_key_window: true,   // the search field must accept typing
             can_become_main_window: false,
@@ -26,7 +26,7 @@ tauri_nspanel::tauri_panel! {
 pub fn setup_panel(window: &tauri::WebviewWindow) -> Result<(), String> {
     use tauri_nspanel::{CollectionBehavior, StyleMask, WebviewWindowExt};
 
-    let panel = window.to_panel::<CopyPasterPanel>().map_err(|e| e.to_string())?;
+    let panel = window.to_panel::<IagoPanel>().map_err(|e| e.to_string())?;
     panel.set_style_mask(StyleMask::empty().nonactivating_panel().into());
     panel.set_collection_behavior(
         CollectionBehavior::new()
@@ -35,7 +35,7 @@ pub fn setup_panel(window: &tauri::WebviewWindow) -> Result<(), String> {
             .into(),
     );
     // Stay up until the user picks or presses Esc — not dismissed just because
-    // CopyPaster is not the active app (it never is, by design).
+    // Iago is not the active app (it never is, by design).
     panel.set_hides_on_deactivate(false);
     crate::debug_log::log("panel: popup converted to non-activating NSPanel");
     Ok(())
