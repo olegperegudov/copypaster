@@ -482,6 +482,17 @@ pub fn run() {
                 }
             });
 
+            // Introduce ourselves to Accessibility at launch rather than at the
+            // first paste. The check is what puts the app in the settings pane,
+            // and a pane with no Iago in it gives the user nothing to switch on
+            // — the paste just dies quietly, which is how the rename broke it.
+            if paste::accessibility_trusted(false) {
+                debug_log::log("accessibility: granted");
+            } else {
+                debug_log::log("accessibility: missing — asking for it");
+                paste::accessibility_trusted(true);
+            }
+
             debug_log::log("setup complete");
             Ok(())
         })

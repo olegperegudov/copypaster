@@ -44,6 +44,58 @@ pub fn paste(payload: &Payload, skip_next: &std::sync::Mutex<bool>, target_pid: 
     send_paste_keys()
 }
 
+/// Shown when the paste is refused, and written to the log. The user reads the
+/// system prompt, not this — it is here so a bug report says why nothing landed.
+pub const NEEDS_ACCESSIBILITY: &str =
+    "Iago has no Accessibility grant, so the keystroke would be dropped";
+
+/// The gate in front of the keystroke, kept apart from the syscall so the
+/// refusal has a test. Without the grant macOS eats the event and returns no
+/// error, so posting it anyway would report a paste that never happened.
+fn gate(trusted: bool) -> Result<(), String> {
+    if trusted {
+        Ok(())
+    } else {
+        Err(NEEDS_ACCESSIBILITY.to_string())
+    }
+}
+
+/// Asks macOS whether this app may post keyboard events, and — with `prompt` —
+/// puts up the system dialog that offers to open the settings pane.
+///
+/// The call is also what *lists* the app under Privacy & Security →
+/// Accessibility: an app that never asks never appears there, so the user has
+/// nothing to switch on and every paste dies silently. That was the bug behind
+/// the rename: the grant belonged to the old bundle identifier, the new one had
+/// never introduced itself, and the pane showed no Iago at all.
+#[cfg(target_os = "macos")]
+pub fn accessibility_trusted(prompt: bool) -> bool {
+    use core_foundation::base::TCFType;
+    use core_foundation::boolean::CFBoolean;
+    use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
+    use core_foundation::string::{CFString, CFStringRef};
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    unsafe extern "C" {
+        fn AXIsProcessTrustedWithOptions(options: CFDictionaryRef) -> u8;
+        static kAXTrustedCheckOptionPrompt: CFStringRef;
+    }
+
+    unsafe {
+        let key = CFString::wrap_under_get_rule(kAXTrustedCheckOptionPrompt);
+        let options = CFDictionary::from_CFType_pairs(&[(
+            key.as_CFType(),
+            CFBoolean::from(prompt).as_CFType(),
+        )]);
+        AXIsProcessTrustedWithOptions(options.as_concrete_TypeRef()) != 0
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn accessibility_trusted(_prompt: bool) -> bool {
+    true
+}
+
 /// macOS: ⌘V as a raw key event with the Command flag set on the event itself.
 /// The receiving app reads the chord from those flags, so nothing depends on
 /// which modifiers are physically held or which layout is active.
@@ -51,6 +103,14 @@ pub fn paste(payload: &Payload, skip_next: &std::sync::Mutex<bool>, target_pid: 
 fn send_paste_keys() -> Result<(), String> {
     use core_graphics::event::{CGEvent, CGEventFlags, CGEventTapLocation};
     use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
+
+    // Ask before posting: without the grant the event is dropped in silence, and
+    // asking is what raises the prompt and lists the app in the settings pane.
+    if let Err(e) = gate(accessibility_trusted(false)) {
+        accessibility_trusted(true);
+        crate::debug_log::log("paste: refused — no Accessibility grant, prompted for it");
+        return Err(e);
+    }
 
     let source = CGEventSource::new(CGEventSourceStateID::CombinedSessionState)
         .map_err(|_| "CGEventSource::new failed".to_string())?;
@@ -67,7 +127,7 @@ fn send_paste_keys() -> Result<(), String> {
     up.set_flags(CGEventFlags::CGEventFlagCommand);
     up.post(CGEventTapLocation::HID);
 
-    crate::debug_log::log("paste: Cmd+V sent");
+    crate::debug_log::log("paste: Cmd+V posted, grant in place");
     Ok(())
 }
 
@@ -146,5 +206,14 @@ mod tests {
     fn the_paste_key_is_the_physical_v_not_a_layout_lookup() {
         assert_eq!(KEY_V, 0x09, "kVK_ANSI_V");
         assert_ne!(KEY_V, 0x00, "keycode 0 is the A key — that is the shipped bug");
+    }
+
+    /// macOS drops a posted keystroke from an untrusted app without an error, so
+    /// the only honest thing to do without the grant is refuse. Posting anyway
+    /// is what made the app report a paste it never delivered.
+    #[test]
+    fn without_the_accessibility_grant_the_paste_is_refused_not_reported_as_sent() {
+        assert!(gate(false).is_err(), "no grant must not read as a delivered paste");
+        assert!(gate(true).is_ok());
     }
 }
