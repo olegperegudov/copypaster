@@ -1,6 +1,6 @@
 [package]
 name = "iago"
-version = "0.1.31"
+version = "0.1.32"
 description = "Clipboard history for macOS and Windows"
 authors = ["Oleg Peregudov"]
 edition = "2021"
